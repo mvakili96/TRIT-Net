@@ -7,6 +7,13 @@ import os
 import numpy as np
 import scipy.misc as misc
 
+
+from detectron2.config import get_cfg
+from detectron2 import model_zoo
+from detectron2.modeling import build_model
+from detectron2.checkpoint import DetectionCheckpointer
+from mask2former import add_maskformer2_config
+
 from torch.utils import data
 from torchstat import stat
 from pytorch_bn_fusion.bn_fusion import fuse_bn_recursively
@@ -17,6 +24,8 @@ from ptsemseg.metrics import runningScore
 from ptsemseg.utils import convert_state_dict
 
 torch.backends.cudnn.benchmark = True
+
+
 
 def reset_batchnorm(m):
     if isinstance(m, torch.nn.BatchNorm2d):

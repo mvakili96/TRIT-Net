@@ -8,6 +8,55 @@ from typing import Iterable
 import torch.nn.functional as F
 
 
+class ConvLayer(nn.Sequential):
+    def __init__(self, in_channels, out_channels, kernel=3, stride=1, dropout=0.1, dilation_this = 1):
+        super().__init__()
+        if dilation_this == 1:
+            self.add_module('conv', nn.Conv2d(in_channels, out_channels, kernel_size=kernel,
+                                              stride=stride, padding=kernel//2, bias = False, dilation = dilation_this))
+            self.add_module('norm', nn.BatchNorm2d(out_channels))
+            self.add_module('relu', nn.ReLU(inplace=True))
+        else:
+            self.add_module('conv', nn.Conv2d(in_channels, out_channels, kernel_size=kernel,
+                                                padding='same', bias = False, dilation = dilation_this))
+            self.add_module('norm', nn.BatchNorm2d(out_channels))
+            self.add_module('relu', nn.ReLU(inplace=True))
+
+
+    def forward(self, x):
+        return super().forward(x)
+
+
+class MyDecoder(nn.Sequential):
+    ###======================================================================================================
+    ### MyDecoder::init()
+    ###======================================================================================================
+    def __init__(self, in_channels,out_channels):
+        super().__init__()
+        ###
+        self.add_module('conv', nn.Conv2d(in_channels=in_channels, out_channels=16,
+                                          kernel_size=(1, 1), stride=1, padding=0, bias=True))
+        self.add_module('norm', nn.BatchNorm2d(16))
+        self.add_module('relu', nn.ReLU(inplace=True))
+
+        ###
+        self.add_module('conv_b', nn.Conv2d(in_channels=16, out_channels=48,
+                                            kernel_size=(3, 3), stride=1, padding=0, bias=True))
+        self.add_module('norm_b', nn.BatchNorm2d(48))
+        self.add_module('relu_b', nn.ReLU(inplace=True))
+
+        ###
+
+        self.add_module('conv_c', nn.Conv2d(in_channels=48, out_channels=out_channels,
+                                            kernel_size=(1, 1), stride=1, padding=0, bias=True))
+
+
+
+    ###======================================================================================================
+    ### MyDecoder::forward()
+    ###======================================================================================================
+    def forward(self, x):
+        return super().forward(x)
 
 class LayerNorm2d(nn.LayerNorm):
     def forward(self, x):
@@ -214,6 +263,7 @@ class SegFormerDecoder(nn.Module):
         for feature, stage in zip(features, self.stages):
             x = stage(feature)
             new_features.append(x)
+        
         return new_features
 
 
@@ -273,6 +323,8 @@ class SegFormer(nn.Module):
         self.decoder_centerline = nn.Conv2d(in_channels=decoder_channels+num_classes,
                                                   out_channels=1, kernel_size=1, stride=1,
                                                   padding=0, bias=True)
+        self.rpnet_decoder_AFM = MyDecoder(in_channels=decoder_channels+num_classes, out_channels=1)
+
 
     def forward(self, x):
         size_in = x.size()
@@ -283,11 +335,16 @@ class SegFormer(nn.Module):
 
         out_seg_after_relu = self.relu_on_finalLayer(out_seg)
         backbone_segformer = torch.cat([backbone, out_seg_after_relu], 1)
+
         centerline         = self.decoder_centerline(backbone_segformer)
-
-        segmentation = F.interpolate(out_seg, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
-        centerline   = F.interpolate(centerline, size=(size_in[2], size_in[3]), mode="bilinear",align_corners=True)
+        AFM            = self.rpnet_decoder_AFM(backbone_segformer)
 
 
-        return segmentation, centerline #segmentation.sum(dim=1, keepdim=True)
+        segmentation  = F.interpolate(out_seg, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
+        centerline    = F.interpolate(centerline, size=(size_in[2], size_in[3]), mode="bilinear",align_corners=True)
+        AFM           = F.interpolate(AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
+
+
+
+        return segmentation, centerline, AFM #segmentation.sum(dim=1, keepdim=True)
 

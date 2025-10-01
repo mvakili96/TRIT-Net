@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+weights/
+runs/
+Optimized_Design/
+Network_Design_Optimization/
+Mask2Former/
+detectron2/
+
+train_py/*
+!train_py/*.py

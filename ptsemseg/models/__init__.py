@@ -8,6 +8,10 @@ from ptsemseg.models.comparison_models import DinkNet34
 from ptsemseg.models.comparison_models import ERFNet
 from ptsemseg.models.comparison_models import Bisenet_v2
 from ptsemseg.models.segformer import SegFormer
+from ptsemseg.models.SegEncode_HarDDecode import SegHarDNet
+from ptsemseg.models.Mask2Former_Model import Mask2FormerMultiMap
+
+
 
 
 
@@ -38,6 +42,8 @@ def _get_model_instance(name):
             "erfnet": ERFNet,
             "bisenet_v2": Bisenet_v2,
             "segformer": SegFormer,
+            "seghardnet": SegHarDNet,
+            "mask2former": Mask2FormerMultiMap,
         }[name]
     except:
         raise ("Model {} not available".format(name))

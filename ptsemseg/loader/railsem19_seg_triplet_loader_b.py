@@ -106,10 +106,11 @@ class RailSem19_SegTriplet_b_Loader(data.Dataset):
 
 
         ###///////////////////////////////////////////////////////////////////////////////////////////////////
-        ### read fnames
+        ### 3.  read fnames
         ###///////////////////////////////////////////////////////////////////////////////////////////////////
         # self.dir_img_raw_jpg    = dir_root_data_seg     + 'jpgs/rs19_val/'
         self.dir_img_raw_jpg = dir_root_data_seg + 'train_py/LR_regu_railsem+ydhr/jpgs/'
+        self.dir_img_AFM     = dir_root_data_seg + 'train_py/LR_regu_railsem+ydhr/AFM/'
         if self.n_classes == 19:
             self.dir_label_seg_png  = dir_root_data_seg     + 'train_py/uint8/rs19_val/'
         elif self.n_classes == 3:
@@ -132,20 +133,20 @@ class RailSem19_SegTriplet_b_Loader(data.Dataset):
 
 
         ###=============================================================================================
-        ### 3. read fnames for all the raw-imgs
+        ### 4. read fnames for all the raw-imgs
         ###=============================================================================================
         self.fnames_img_raw_jpg = myhelper_railsem19_b.read_fnames_trainval(self.dir_img_raw_jpg, 7317)
 
 
         ###=============================================================================================
-        ### 4. read fnames for all the seg-labels
+        ### 5. read fnames for all the seg-labels
         ###=============================================================================================
         self.fnames_label_seg_png = myhelper_railsem19_b.read_fnames_trainval(self.dir_label_seg_png, 7317)
 
 
 
         ###=============================================================================================
-        ### 7. read fname for all the triplets (image)
+        ### 6. read fname for all the triplets (image)
         ###=============================================================================================
         if self.n_channels == 1:
             self.fnames_triplet_image = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_image, 7317)
@@ -153,6 +154,12 @@ class RailSem19_SegTriplet_b_Loader(data.Dataset):
             self.fnames_triplet_C = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_C, 7317)
             self.fnames_triplet_L = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_L, 7317)
             self.fnames_triplet_R = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_R, 7317)
+
+        ###=============================================================================================
+        ### 7. read fnames for all the seg-labels
+        ###=============================================================================================
+        self.fnames_AFM = myhelper_railsem19_b.read_fnames_trainval(self.dir_img_AFM, 7317)
+
 
 
     #end
@@ -201,6 +208,8 @@ class RailSem19_SegTriplet_b_Loader(data.Dataset):
         ###=============================================================================================
         full_fname_img_raw_jpg    = self.dir_img_raw_jpg    + self.fnames_img_raw_jpg  [self.type_trainval][index]
         full_fnames_label_seg_png = self.dir_label_seg_png  + self.fnames_label_seg_png[self.type_trainval][index]
+        full_fnames_img_AFM       = self.dir_img_AFM        + self.fnames_AFM[self.type_trainval][index]
+
         if self.n_channels == 1:
             full_fname_triplet_image  = self.dir_triplet_image  + self.fnames_triplet_image [self.type_trainval][index]
         elif self.n_channels == 3:
@@ -246,6 +255,9 @@ class RailSem19_SegTriplet_b_Loader(data.Dataset):
             labelmap_leftright = np.concatenate((labelmap_leftrail, labelmap_rightrail), axis=0)
             output_labelmap_leftright  = torch.from_numpy(labelmap_leftright).float()
 
+
+        AFM           = myhelper_railsem19_b.read_triplet_image_from_file(full_fnames_img_AFM, self.size_img_rsz)
+
         ###///////////////////////////////////////////////////////////////////////////////////////////////////
         ### 2. processing
         ###///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -270,19 +282,22 @@ class RailSem19_SegTriplet_b_Loader(data.Dataset):
         output_img_raw             = torch.from_numpy(img_raw_rsz_fl_n).float()
         output_img_label_seg       = torch.from_numpy(img_label_seg_rsz_uint8).long()
         output_labelmap_centerline = torch.from_numpy(labelmap_centerline).float()
+        output_AFM                 = torch.from_numpy(AFM).float()
         # output_labelmap_centerline_priority = torch.from_numpy(labelmap_centerline_priority).float()
 
         ###
         if self.n_channels == 1:
             output_final = {'img_raw_fl_n'                   : output_img_raw,                              # (3, h_rsz, w_rsz)
                             'gt_img_label_seg'               : output_img_label_seg,                        # (h_rsz, w_rsz)
-                            'gt_labelmap_centerline'         : output_labelmap_centerline}                 # (1, h_rsz, w_rsz)
+                            'gt_labelmap_centerline'         : output_labelmap_centerline,
+                            'gt_AFM'                         : output_AFM}                 # (1, h_rsz, w_rsz)
 
         elif self.n_channels == 3:
             output_final = {'img_raw_fl_n'                   : output_img_raw,                              # (3, h_rsz, w_rsz)
                             'gt_img_label_seg'               : output_img_label_seg,                        # (h_rsz, w_rsz)
                             'gt_labelmap_centerline'         : output_labelmap_centerline,                 # (1, h_rsz, w_rsz)
-                            'gt_labelmap_leftright'          : output_labelmap_leftright}
+                            'gt_labelmap_leftright'          : output_labelmap_leftright,
+                            'gt_AFM'                         : output_AFM}
 
 
         return output_final

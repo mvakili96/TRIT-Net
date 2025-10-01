@@ -103,7 +103,7 @@ def convert_img_ori_to_img_data(img_ori_uint8,
     #   (5) make sure it is float32 type
     #/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    if arch == "rpnet_c" or arch == "bisenet_v2" or arch == "segformer":
+    if arch == "rpnet_c" or arch == "bisenet_v2" or arch == "segformer" or arch == "seghardnet" or arch == "mask2former":
         img_ori_fl = img_ori_uint8.astype(np.float32) / 255.0
         img_ori_fl_n = img_ori_fl - rgb_mean
         img_ori_fl_n = img_ori_fl_n / rgb_std
@@ -118,7 +118,7 @@ def convert_img_ori_to_img_data(img_ori_uint8,
         raise ("No model found for converting image to data")
 
 
-    if arch == "segformer":
+    if arch == "segformer" or arch == "seghardnet" or arch == "mask2former" or arch == "bisenet_v2":
         img_data_fl_n_final_coord = img_data_fl_n_final
     else:
         img_data_fl_n_final_coord = concat_xy_coordinates_to_image(img_data_fl_n_final)

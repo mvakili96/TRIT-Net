@@ -2,6 +2,7 @@
 # Jungwon Kang
 
 import os
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 import math
 import yaml
 import time
@@ -16,6 +17,9 @@ from scipy.signal import find_peaks
 
 import sys
 import cv2
+
+sys.path.insert(0, "/media/m_vakili/New Volume/AttractionField_TPE_Training")  # project root
+
 
 from torch.utils                import data
 from tqdm                       import tqdm
@@ -34,7 +38,6 @@ from helpers_my                 import my_loss             ## Center/LeftRight L
 from ptsemseg.loader.myhelpers  import myhelper_railsem19
 
 from tensorboardX               import SummaryWriter
-
 
 
 ########################################################################################################################
@@ -76,6 +79,8 @@ def train(cfg, writer, logger):
         "erfnet": {'h': 540, 'w': 960},
         "bisenet_v2": {'h': 540, 'w': 960},
         "segformer": {'h': 544, 'w': 960},
+        "seghardnet": {'h': 544, 'w': 960},
+        "mask2former": {'h': 544, 'w': 960},
     }
     train_or_pre = True
 
@@ -84,7 +89,7 @@ def train(cfg, writer, logger):
     ### create dataloader_head
     ###---------------------------------------------------------------------------------------------------
     t_loader_head = data_loader(type_trainval="train", output_size_hmap="size_img_rsz", n_classes_seg = n_classes_segmentation, n_channels_reg = n_channels_regression, network_input_size = network_image_sizes[cfg["model"]["arch"]], arch_this = cfg["model"]["arch"])
-    # v_loader_head = data_loader(type_trainval="val",   output_size_hmap="size_img_rsz", n_classes_seg = n_classes_segmentation, n_channels_reg = n_channels_regression, network_input_size = network_image_sizes[cfg["model"]["arch"]], arch_this = cfg["model"]["arch"])
+    v_loader_head = data_loader(type_trainval="val",   output_size_hmap="size_img_rsz", n_classes_seg = n_classes_segmentation, n_channels_reg = n_channels_regression, network_input_size = network_image_sizes[cfg["model"]["arch"]], arch_this = cfg["model"]["arch"])
 
 
     ###---------------------------------------------------------------------------------------------------
@@ -100,11 +105,11 @@ def train(cfg, writer, logger):
     ###---------------------------------------------------------------------------------------------------
     ### create v_loader_batch
     ###---------------------------------------------------------------------------------------------------
-    # v_loader_batch = data.DataLoader(
-    #     v_loader_head,
-    #     batch_size=cfg["training"]["batch_size"],
-    #     num_workers=cfg["training"]["n_workers"]
-    #     )
+    v_loader_batch = data.DataLoader(
+        v_loader_head,
+        batch_size=cfg["training"]["batch_size"],
+        num_workers=cfg["training"]["n_workers"]
+        )
 
 
     ###============================================================================================================
@@ -200,6 +205,7 @@ def train(cfg, writer, logger):
     loss_accum_centerline  = 0
     loss_accum_leftright   = 0
     loss_accum_regu        = 0
+    loss_accum_AFM         = 0
 
 
     num_loss = 0
@@ -209,6 +215,7 @@ def train(cfg, writer, logger):
     ###============================================================================================================
     while i <= cfg["training"]["train_iters"] and flag:
         for data_batch in t_loader_batch:
+            torch.cuda.empty_cache()
             ###
             i += 1
             start_ts = time.time()
@@ -218,6 +225,8 @@ def train(cfg, writer, logger):
             imgs_raw_fl_n                        = data_batch['img_raw_fl_n']                     # (bs, 3, h_rsz, w_rsz)
             gt_imgs_label_seg                    = data_batch['gt_img_label_seg']                 # (bs, h_rsz, w_rsz)
             gt_labelmap_centerline               = data_batch['gt_labelmap_centerline']           # (bs, 1, h_rsz, w_rsz)
+            gt_AFM                               = data_batch['gt_AFM']                           # (bs, 1, h_rsz, w_rsz)
+
             if n_channels_regression == 3:
                 gt_labelmap_leftright                = data_batch['gt_labelmap_leftright']            # (bs, 2, h_rsz, w_rsz)
                 gt_labelmap_leftright = gt_labelmap_leftright.to(device)
@@ -226,6 +235,7 @@ def train(cfg, writer, logger):
             imgs_raw_fl_n           = imgs_raw_fl_n.to(device)
             gt_imgs_label_seg       = gt_imgs_label_seg.to(device)
             gt_labelmap_centerline  = gt_labelmap_centerline.to(device)
+            gt_AFM                  = gt_AFM.to(device)
 
             ###
             scheduler.step()
@@ -235,12 +245,12 @@ def train(cfg, writer, logger):
             ###
             if cfg["model"]["arch"] != "bisenet_v2":
                 if n_channels_regression == 1:
-                    outputs_seg, outputs_centerline = model(imgs_raw_fl_n)
+                    outputs_seg, outputs_centerline, outputs_AFM = model(imgs_raw_fl_n)
                 elif n_channels_regression == 3:
                     outputs_seg, outputs_centerline, outputs_leftright = model(imgs_raw_fl_n)
             else:
                 if n_channels_regression == 1:
-                    outputs_seg, outputs_centerline, aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n)
+                    outputs_seg, outputs_centerline, outputs_AFM, aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n)
                 elif n_channels_regression == 3:
                     outputs_seg, outputs_centerline, outputs_leftright, aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n)
 
@@ -259,13 +269,13 @@ def train(cfg, writer, logger):
                 loss_fn(input=aux3, target=gt_imgs_label_seg, train_val=0, dev=device) + \
                 loss_fn(input=aux4, target=gt_imgs_label_seg, train_val=0, dev=device) + \
                 loss_seg_unique
-                # loss_seg = loss_seg_unique
-
+                loss_seg = loss_seg_unique
 
             loss_centerline = my_loss.L1_loss(x_est=outputs_centerline, x_gt=gt_labelmap_centerline, n_chann = 1, b_sigmoid=True)
+            loss_AFM        = my_loss.L1_loss(x_est=outputs_AFM, x_gt=gt_AFM, n_chann=1,b_sigmoid=True)
             if n_channels_regression == 1:
                 if train_or_pre:
-                    loss_this = loss_seg + 0.4 * loss_centerline
+                    loss_this = 1*loss_seg  + 1*loss_centerline  + 1*loss_AFM
                 else:
                     loss_this = loss_seg
             elif n_channels_regression == 3:
@@ -296,6 +306,7 @@ def train(cfg, writer, logger):
             loss_accum_all        += loss_this.item()
             loss_accum_seg        += loss_seg.item()
             loss_accum_centerline += loss_centerline.item()
+            loss_accum_AFM        += loss_AFM.item()
             if n_channels_regression == 3:
                 loss_accum_leftright  += loss_leftright.item()
                 loss_accum_regu       += loss_regu.item()
@@ -307,7 +318,7 @@ def train(cfg, writer, logger):
             ### print (on demand)
             if (i + 1) % cfg["training"]["print_interval"] == 0:
                 ###
-                fmt_str = "Iter [{:d}/{:d}]  Loss (all): {:.7f}, Loss (seg): {:.7f}, Loss (centerline): {:.7f}, Loss (leftright): {:.7f}, Loss (Regu): {:.7f}, Time/Image: {:.7f}  lr={:.7f}"
+                fmt_str = "Iter [{:d}/{:d}]  Loss (all): {:.7f}, Loss (seg): {:.7f}, Loss (centerline): {:.7f}, Loss (AFM): {:.7f}, Loss (leftright): {:.7f}, Loss (Regu): {:.7f}, Time/Image: {:.7f}  lr={:.7f}"
 
                 print_str = fmt_str.format(
                     i + 1,
@@ -315,6 +326,7 @@ def train(cfg, writer, logger):
                     loss_accum_all        / num_loss,
                     loss_accum_seg        / num_loss,
                     loss_accum_centerline / num_loss,
+                    loss_accum_AFM        / num_loss,
                     loss_accum_leftright  / num_loss,
                     loss_accum_regu       / num_loss,
                     time_meter.avg / cfg["training"]["batch_size"],
@@ -334,52 +346,63 @@ def train(cfg, writer, logger):
             if (i + 1) % cfg["training"]["val_interval"] == 0 or (i + 1) == cfg["training"]["train_iters"]:
                 loss_accum_seg_validation = 0
                 loss_accum_centerline_validation = 0
+                loss_accum_AFM_validation = 0
                 loss_accum_leftright_validation = 0
                 num_loss_validation = 0
-                if (i + 1) % 10000000 == 0:
+                if (i + 1) % 1 == 9000000:
                     for data_batch_validation in v_loader_batch:
-                        imgs_raw_fl_n          = data_batch_validation['img_raw_fl_n']                            # (bs, 3, h_rsz, w_rsz)
-                        gt_imgs_label_seg      = data_batch_validation['gt_img_label_seg']                    # (bs, h_rsz, w_rsz)
-                        gt_labelmap_centerline = data_batch_validation['gt_labelmap_centerline']         # (bs, 1, h_rsz, w_rsz)
-                        if n_channels_regression == 3:
-                            gt_labelmap_leftright  = data_batch_validation['gt_labelmap_leftright']
-                            gt_labelmap_leftright  = gt_labelmap_leftright.to(device)
 
-                        imgs_raw_fl_n          = imgs_raw_fl_n.to(device)
-                        gt_imgs_label_seg      = gt_imgs_label_seg.to(device)
-                        gt_labelmap_centerline = gt_labelmap_centerline.to(device)
+                        imgs_raw_fl_n_val                        = data_batch_validation['img_raw_fl_n']                     # (bs, 3, h_rsz, w_rsz)
+                        gt_imgs_label_seg_val                    = data_batch_validation['gt_img_label_seg']                 # (bs, h_rsz, w_rsz)
+                        gt_labelmap_centerline_val               = data_batch_validation['gt_labelmap_centerline']           # (bs, 1, h_rsz, w_rsz)
+                        gt_AFM_val                               = data_batch_validation['gt_AFM']                           # (bs, 1, h_rsz, w_rsz)
+
+
+                        if n_channels_regression == 3:
+                            gt_labelmap_leftright_val  = data_batch_validation['gt_labelmap_leftright']
+                            gt_labelmap_leftright_val  = gt_labelmap_leftright_val.to(device)
+
+                        imgs_raw_fl_n_val          = imgs_raw_fl_n_val.to(device)
+                        gt_imgs_label_seg_val      = gt_imgs_label_seg_val.to(device)
+                        gt_labelmap_centerline_val = gt_labelmap_centerline_val.to(device)
+                        gt_AFM_val                 = gt_AFM_val.to(device)
+
 
                         if cfg["model"]["arch"] != "bisenet_v2":
                             if n_channels_regression == 1:
-                                outputs_seg, outputs_centerline =  model(imgs_raw_fl_n)
+                                outs_seg, outs_centerline, outs_AFM =  model(imgs_raw_fl_n_val)
                             elif n_channels_regression == 3:
-                                outputs_seg, outputs_centerline, outputs_leftright = model(imgs_raw_fl_n)
+                                outs_seg, outs_centerline, outs_leftright = model(imgs_raw_fl_n_val)
                         else:
                             if n_channels_regression == 1:
-                                outputs_seg, outputs_centerline, aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n)
+                                outs_seg, outs_centerline, aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n_val)
                             elif n_channels_regression == 3:
-                                outputs_seg, outputs_centerline, outputs_leftright, aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n)
+                                outs_seg, outs_centerline, outs_leftright, aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n_val)
 
 
 
-                        loss_seg = loss_fn(input=outputs_seg, target=gt_imgs_label_seg, train_val = 0, dev = device)
-                        loss_centerline = my_loss.L1_loss(x_est=outputs_centerline, x_gt=gt_labelmap_centerline, n_chann = n_channels_regression, b_sigmoid=True)
+                        loss_seg_val        = loss_fn(input=outs_seg, target=gt_imgs_label_seg_val, train_val = 0, dev = device)
+                        loss_centerline_val = my_loss.L1_loss(x_est=outs_centerline, x_gt=gt_labelmap_centerline_val, n_chann = n_channels_regression, b_sigmoid=True)
+                        loss_AFM_val        = my_loss.L1_loss(x_est=outs_AFM, x_gt=gt_AFM_val, n_chann=1,b_sigmoid=True)
+
                         if n_channels_regression == 3:
-                            loss_leftright = my_loss.L1_loss(x_est=outputs_leftright, x_gt=gt_labelmap_leftright, n_chann = n_channels_regression)
-                            loss_accum_leftright_validation  += loss_leftright.item()
+                            loss_leftright_val = my_loss.L1_loss(x_est=outs_leftright, x_gt=gt_labelmap_leftright_val, n_chann = n_channels_regression)
+                            loss_accum_leftright_validation  += loss_leftright_val.item()
 
-                        loss_accum_seg_validation        += loss_seg.item()
-                        loss_accum_centerline_validation += loss_centerline.item()
+                        loss_accum_seg_validation        += loss_seg_val.item()
+                        loss_accum_centerline_validation += loss_centerline_val.item()
+                        loss_accum_AFM_validation        += loss_AFM_val.item()
 
                         num_loss_validation += 1
 
-                    fmt_str = "(VALIDATION) Iter [{:d}/{:d}], Loss (seg): {:.7f}, Loss (centerline): {:.7f}, Loss (leftright): {:.7f}"
+                    fmt_str = "(VALIDATION) Iter [{:d}/{:d}], Loss (seg): {:.7f}, Loss (centerline): {:.7f}, Loss (AFM): {:.7f}, Loss (leftright): {:.7f}"
 
                     print_str = fmt_str.format(
                         i + 1,
                         cfg["training"]["train_iters"],
                         loss_accum_seg_validation / num_loss_validation,
                         loss_accum_centerline_validation / num_loss_validation,
+                        loss_accum_AFM_validation / num_loss_validation,
                         loss_accum_leftright_validation  / num_loss_validation
                     )
 
