@@ -6,7 +6,7 @@ weight_init_t:
     erfnet: './runs/hardnet/cur/Mybest_erf.pkl'           # used to be 6000 for original railsem
     bisenet_v2: './runs/hardnet/cur/Mybest_bis_4class&cen.pkl'       # used to be 20000 for original railsem
     segformer: './runs/hardnet/cur/Mybest_Segf_DR.pkl'
-    seghardnet: './runs/hardnet/cur/Mybest_12000_9.pkl'
+    seghardnet: './runs/hardnet/cur/TRIT-Net-Encoder_step077000.pth' 
     mask2former: './runs/hardnet/cur/Mybest_73000.pkl'
 weight_init_p:
     rpnet_c: './runs/hardnet/cur/hardnet_best.pkl'
@@ -28,7 +28,7 @@ training:
     num_seg_classes: 4                        
     num_reg_channels: 1
     train_iters: 90000
-    batch_size: 8
+    batch_size: 16
     val_interval: 1000
     n_workers: 0
     print_interval: 100
@@ -38,7 +38,7 @@ training:
             lr: 0.025                      # for erfnet railsem+, it is 0.001
             weight_decay: 0.0005
         sgd:
-            lr: 0.0001
+            lr: 0.001
             weight_decay: 0.0005
             momentum: 0.9
     loss:

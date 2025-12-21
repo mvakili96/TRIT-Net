@@ -18,7 +18,7 @@ from scipy.signal import find_peaks
 import sys
 import cv2
 
-sys.path.insert(0, "/media/m_vakili/New Volume/AttractionField_TPE_Training")  # project root
+sys.path.insert(0, "/run/determined/workdir/nas2/Mohammadjavad/TRIT-Net")  # project root
 
 
 from torch.utils                import data

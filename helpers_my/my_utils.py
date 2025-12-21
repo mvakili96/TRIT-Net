@@ -48,7 +48,13 @@ def load_weights_to_model(model, fname_weights_to_be_loaded, arch, train=True):
     ### 1. load weights-to-be-loaded from a file
     ###================================================================================================
     if train:
-        state_dict_weights0 = torch.load(fname_weights_to_be_loaded)["model_state"]
+        ckpt = torch.load(fname_weights_to_be_loaded, map_location="cpu")
+        if "model_state" in ckpt:
+            state_dict_weights0 = ckpt["model_state"]
+        elif "state_dict" in ckpt:
+            state_dict_weights0 = ckpt["state_dict"]
+        else:
+            raise KeyError(f"No 'model_state' or 'state_dict' in checkpoint. Found keys: {list(ckpt.keys())}")
     else:
         state_dict_weights0 = torch.load(fname_weights_to_be_loaded)
     print('loaded weights-to-be-loaded form %s !' % fname_weights_to_be_loaded)
