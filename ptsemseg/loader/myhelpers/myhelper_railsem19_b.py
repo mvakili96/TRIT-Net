@@ -44,7 +44,14 @@ def read_img_raw_jpg_from_file(full_fname_img_raw_jpg, size_img_rsz,arch,
         #   img_raw[:,:,0] -> B
         #   img_raw[:,:,1] -> G
         #   img_raw[:,:,2] -> R
-
+    
+    if img_raw is None or img_raw.size == 0:
+        # optional: show file size to detect 0-byte corruptions
+        fsz = os.path.getsize(full_fname_img_raw_jpg)
+        raise RuntimeError(
+            f"[read_img_raw_jpg_from_file] Failed to read image: {full_fname_img_raw_jpg} "
+            f"(cv2.imread returned None/empty, size_on_disk={fsz} bytes)"
+        )
 
     ###================================================================================================
     ### resize img
@@ -273,27 +280,22 @@ def read_triplet_C_from_file(full_fname_triplet_C_tiff,size_img_rsz):
 ########################################################################################################################
 def read_fnames_trainval(dir_this, idx_split):
 
-    ### read fname for all the files at dir_this
     list_fname_ = os.listdir(dir_this)
+    list_fname_ = [
+        f for f in list_fname_
+        if f != "@eaDir"                                  # skip Synology thumbnails folder
+        and not os.path.isdir(os.path.join(dir_this, f))  # keep only files
+    ]
     list_fname  = sorted(list_fname_)
-        # completed to set
-        #       list_fname: list for fnames only, (e.g. rs00001.jpg)
-
 
     ### store fnames according to train/val
-    list_fname_train = list_fname[0:idx_split]
+    list_fname_train = list_fname[0:idx_split] 
     list_fname_val   = list_fname[idx_split:]
-
 
     ### store
     dict_fnames = collections.defaultdict(list)
     dict_fnames["train"] = list_fname_train
     dict_fnames["val"]   = list_fname_val
-        # completed to set
-        #       dict_fnames["train"]: list for fnames only (for train)
-        #       dict_fnames["val"]  : list for fnames only (for val)
-        #               (e.g. 'rs01001.jpg', 'rs01002.jpg', ...)
-
 
     return dict_fnames
 #end

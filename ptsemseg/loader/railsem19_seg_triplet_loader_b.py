@@ -135,13 +135,13 @@ class RailSem19_SegTriplet_b_Loader(data.Dataset):
         ###=============================================================================================
         ### 4. read fnames for all the raw-imgs
         ###=============================================================================================
-        self.fnames_img_raw_jpg = myhelper_railsem19_b.read_fnames_trainval(self.dir_img_raw_jpg, 7317)
+        self.fnames_img_raw_jpg = myhelper_railsem19_b.read_fnames_trainval(self.dir_img_raw_jpg, 8315)
 
 
         ###=============================================================================================
         ### 5. read fnames for all the seg-labels
         ###=============================================================================================
-        self.fnames_label_seg_png = myhelper_railsem19_b.read_fnames_trainval(self.dir_label_seg_png, 7317)
+        self.fnames_label_seg_png = myhelper_railsem19_b.read_fnames_trainval(self.dir_label_seg_png, 8315)
 
 
 
@@ -149,16 +149,16 @@ class RailSem19_SegTriplet_b_Loader(data.Dataset):
         ### 6. read fname for all the triplets (image)
         ###=============================================================================================
         if self.n_channels == 1:
-            self.fnames_triplet_image = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_image, 7317)
+            self.fnames_triplet_image = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_image, 8315)
         elif self.n_channels == 3:
-            self.fnames_triplet_C = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_C, 7317)
-            self.fnames_triplet_L = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_L, 7317)
-            self.fnames_triplet_R = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_R, 7317)
+            self.fnames_triplet_C = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_C, 8315)
+            self.fnames_triplet_L = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_L, 8315)
+            self.fnames_triplet_R = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_R, 8315)
 
         ###=============================================================================================
         ### 7. read fnames for all the seg-labels
         ###=============================================================================================
-        self.fnames_AFM = myhelper_railsem19_b.read_fnames_trainval(self.dir_img_AFM, 7317)
+        self.fnames_AFM = myhelper_railsem19_b.read_fnames_trainval(self.dir_img_AFM, 8315)
 
 
 
