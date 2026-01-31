@@ -22,38 +22,25 @@ class ConvLayer(nn.Sequential):
             self.add_module('norm', nn.BatchNorm2d(out_channels))
             self.add_module('relu', nn.ReLU(inplace=True))
 
-
     def forward(self, x):
         return super().forward(x)
 
 class MyDecoder(nn.Sequential):
-    ###======================================================================================================
-    ### MyDecoder::init()
-    ###======================================================================================================
     def __init__(self, in_channels,out_channels):
         super().__init__()
-        ###
         self.add_module('conv', nn.Conv2d(in_channels=in_channels, out_channels=16,
                                           kernel_size=(1, 1), stride=1, padding=0, bias=True))
         self.add_module('norm', nn.BatchNorm2d(16))
         self.add_module('relu', nn.ReLU(inplace=True))
 
-        ###
         self.add_module('conv_b', nn.Conv2d(in_channels=16, out_channels=48,
                                             kernel_size=(3, 3), stride=1, padding=0, bias=True))
         self.add_module('norm_b', nn.BatchNorm2d(48))
         self.add_module('relu_b', nn.ReLU(inplace=True))
 
-        ###
-
         self.add_module('conv_c', nn.Conv2d(in_channels=48, out_channels=out_channels,
                                             kernel_size=(1, 1), stride=1, padding=0, bias=True))
 
-
-
-    ###======================================================================================================
-    ### MyDecoder::forward()
-    ###======================================================================================================
     def forward(self, x):
         return super().forward(x)
 
@@ -215,10 +202,10 @@ class SegFormerEncoder(nn.Module):
 
         self.base = nn.ModuleList([])
         first_ch = [16, 24, 32, 48]
-        self.base.append( ConvLayer(in_channels=3, out_channels=first_ch[0], kernel=3, stride=1, dilation_this=1) )  # conv0
-        self.base.append( ConvLayer(first_ch[0], first_ch[1],  kernel=3, dilation_this=1) )                          # conv1
-        self.base.append( ConvLayer(first_ch[1], first_ch[2],  kernel=3, stride=2, dilation_this=1) )                # conv2
-        self.base.append( ConvLayer(first_ch[2], first_ch[3],  kernel=3, dilation_this=1) )                          # conv3
+        self.base.append( ConvLayer(in_channels=3, out_channels=first_ch[0], kernel=3, stride=1, dilation_this=1) )  
+        self.base.append( ConvLayer(first_ch[0], first_ch[1],  kernel=3, dilation_this=1) )                          
+        self.base.append( ConvLayer(first_ch[1], first_ch[2],  kernel=3, stride=2, dilation_this=1) )                
+        self.base.append( ConvLayer(first_ch[2], first_ch[3],  kernel=3, dilation_this=1) )                          
         grmul    = 1.7
         gr       = [10, 16, 18, 24, 32]
         n_layers = [4, 4, 8, 8, 8]
@@ -251,10 +238,8 @@ class SegFormerEncoder(nn.Module):
         for idx_module in range(len(self.base)):
             x = self.base[idx_module](x)
 
-
-
         features = []
-        features.append(x)                                                                   ### HarD Block output added to skip connections
+        features.append(x)                         # HarD Block output added to skip connections
         for stage in self.stages:
             x = stage(x)
             features.append(x)
@@ -263,17 +248,13 @@ class SegFormerEncoder(nn.Module):
         return features
 
 
-
-
 class HarDBlock(nn.Module):
     def get_link(self, layer, base_ch, growth_rate, grmul):
         if layer == 0:
             return base_ch, 0, []
 
         out_channels = growth_rate
-
         link = []
-
         for i in range(10):
             dv = 2 ** i
 
@@ -284,7 +265,6 @@ class HarDBlock(nn.Module):
                 if i > 0:
                     out_channels *= grmul
 
-
         out_channels = int(int(out_channels + 1) / 2) * 2
         in_channels = 0
 
@@ -293,8 +273,6 @@ class HarDBlock(nn.Module):
             in_channels += ch
 
         return out_channels, in_channels, link
-
-
 
     def get_out_ch(self):
         return self.out_channels
@@ -311,7 +289,6 @@ class HarDBlock(nn.Module):
         layers_ = []
         self.out_channels = 0       
 
-
         for i in range(n_layers):
             outch, inch, link = self.get_link(i+1, in_channels, growth_rate, grmul)
             self.links.append(link)
@@ -322,15 +299,12 @@ class HarDBlock(nn.Module):
             else:
                 layers_.append(ConvLayer(inch, outch))
 
-
             if (i % 2 == 0) or (i == n_layers - 1):
                 self.out_channels += outch
 
         self.layers = nn.ModuleList(layers_)
 
-
     def forward(self, x):
-
         layers_ = [x]
 
         for layer in range(len(self.layers)):
@@ -358,12 +332,12 @@ class HarDBlock(nn.Module):
                 out_.append(layers_[i])
             
         out = torch.cat(out_, 1)
+
         return out
 
 class TransitionUp(nn.Module):
     def __init__(self):
         super().__init__()
-
 
     def forward(self, x, skip, concat=True):
         out = F.interpolate(
@@ -378,22 +352,16 @@ class TransitionUp(nn.Module):
         return out
 
 
-
-##############################################################################################
-##############################################################################################
-##############################################################################################
-##############################################################################################
-
 class SegHarDNet(nn.Module):
-    def __init__(self,n_classes_seg = 19, n_channels_reg = 3):
+    def __init__(self,n_classes_seg = 19):
         super().__init__()
         in_channels=64
-        widths=[64, 128, 256, 512]        #sar
-        depths=[3, 4, 6, 3]               #tah
-        all_num_heads=[1, 2, 4, 8]        #tah
-        patch_sizes=[7, 3, 3, 3]          #tah
-        overlap_sizes=[2, 2, 2, 2]        #tah
-        reduction_ratios=[8, 4, 2, 1]     #sar
+        widths=[64, 128, 256, 512]        
+        depths=[3, 4, 6, 3]               
+        all_num_heads=[1, 2, 4, 8]       
+        patch_sizes=[7, 3, 3, 3]          
+        overlap_sizes=[2, 2, 2, 2]        
+        reduction_ratios=[8, 4, 2, 1]     
         mlp_expansions=[4, 4, 4, 4, 4]
         num_classes=n_classes_seg
         drop_prob = 0.0
@@ -401,15 +369,14 @@ class SegHarDNet(nn.Module):
         cur_channels_count = widths[-1]            
         n_blocks = 3
         grmul    = 1.7
-        gr       = [16,18,24]              #[10, 16, 18, 24, 32]
-        n_layers = [4, 8, 8]               #[4, 4, 8, 8, 8]
+        gr       = [16,18,24]              
+        n_layers = [4, 8, 8]               
 
         self.n_blocks       = n_blocks
         self.transUpBlocks  = nn.ModuleList([])
         self.denseBlocksUp  = nn.ModuleList([])
         self.conv1x1_up     = nn.ModuleList([])
         self.n_classes_seg  = n_classes_seg
-        self.n_channels_reg = n_channels_reg
     
         self.encoder = SegFormerEncoder(
             in_channels,
@@ -438,19 +405,14 @@ class SegHarDNet(nn.Module):
             cur_channels_count = blk.get_out_ch()
 
         
-        self.transUpBlocks.append(TransitionUp())                                                    ### HarD Block output added to skip connections
-        cur_channels_count = cur_channels_count + 64                                                 ### HarD Block output added to skip connections
-        self.conv1x1_up.append(ConvLayer(cur_channels_count, cur_channels_count//2, kernel=1))       ### HarD Block output added to skip connections
-        cur_channels_count = cur_channels_count//2                                                   ### HarD Block output added to skip connections
-        blk = HarDBlock(cur_channels_count, gr[i], grmul, n_layers[i])                               ### HarD Block output added to skip connections
-        self.denseBlocksUp.append(blk)                                                               ### HarD Block output added to skip connections           
-        cur_channels_count = blk.get_out_ch()                                                        ### HarD Block output added to skip connections
+        self.transUpBlocks.append(TransitionUp())                                                    # HarD Block output added to skip connections
+        cur_channels_count = cur_channels_count + 64                                                 # HarD Block output added to skip connections
+        self.conv1x1_up.append(ConvLayer(cur_channels_count, cur_channels_count//2, kernel=1))       # HarD Block output added to skip connections
+        cur_channels_count = cur_channels_count//2                                                   # HarD Block output added to skip connections
+        blk = HarDBlock(cur_channels_count, gr[i], grmul, n_layers[i])                               # HarD Block output added to skip connections
+        self.denseBlocksUp.append(blk)                                                               # HarD Block output added to skip connections           
+        cur_channels_count = blk.get_out_ch()                                                        # HarD Block output added to skip connections
 
-
-
-        ###================================================================================================
-        ### output branches
-        ###================================================================================================
         self.finalConv = nn.Conv2d(in_channels=cur_channels_count,
                             out_channels=self.n_classes_seg, kernel_size=1, stride=1,
                             padding=0, bias=True)
@@ -463,19 +425,13 @@ class SegHarDNet(nn.Module):
                                                   out_channels=1, kernel_size=1, stride=1,
                                                   padding=0, bias=True)
 
-        self.rpnet_decoder_AFM = MyDecoder(in_channels=ch_in_rpnet_decoder_centerline, out_channels=1)
-
-        if self.n_channels_reg == 3:
-            self.rpnet_decoder_leftright  = nn.Conv2d(in_channels=ch_in_rpnet_decoder_centerline,
-                                                      out_channels=2, kernel_size=1, stride=1,
-                                                      padding=0, bias=True)
-
+        if self.n_classes_seg == 4:
+            self.rpnet_decoder_AFM = MyDecoder(in_channels=ch_in_rpnet_decoder_centerline, out_channels=1)
 
     def forward(self, x):
         size_in = x.size()
         features = self.encoder(x)
 
-            
         out_seg = features.pop()
         for i in range(self.n_blocks+1):
             skip = features.pop()
@@ -483,9 +439,6 @@ class SegHarDNet(nn.Module):
             out_seg = self.conv1x1_up[i](out_seg)
             out_seg = self.denseBlocksUp[i](out_seg)
         
-
-
-            
         backbone_rpnet = out_seg
         out_seg = self.finalConv(out_seg)
         out_seg_after_relu = self.relu_on_finalConv(out_seg)
@@ -493,23 +446,17 @@ class SegHarDNet(nn.Module):
 
         out_centerline = self.rpnet_decoder_centerline(backbone_rpnet)
 
-        out_AFM        = self.rpnet_decoder_AFM(backbone_rpnet)
-
-
-        if self.n_channels_reg == 3:
-            out_leftright  = self.rpnet_decoder_leftright(backbone_rpnet)
+        if self.n_classes_seg == 4:
+            out_AFM = self.rpnet_decoder_AFM(backbone_rpnet)
+            out_AFM_final = F.interpolate(out_AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
         out_seg_final = F.interpolate(out_seg, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
-
-
         out_centerline_final = F.interpolate(out_centerline, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
-        out_AFM_final       = F.interpolate(out_AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
-        if self.n_channels_reg == 3:
-            out_leftright_final  = F.interpolate(out_leftright, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
-
-        if self.n_channels_reg == 3:
-            return out_seg_final, out_centerline_final, out_leftright_final
-        elif self.n_channels_reg == 1:
+        
+        if self.n_classes_seg == 4:
             return out_seg_final, out_centerline_final,out_AFM_final
+
+        elif self.n_classes_seg == 3:
+            return out_seg_final, out_centerline_final
 
 

@@ -28,25 +28,20 @@ class ConvLayer(nn.Sequential):
     def forward(self, x):
         return super().forward(x)
 
+
 class MyDecoder(nn.Sequential):
-    ###======================================================================================================
-    ### MyDecoder::init()
-    ###======================================================================================================
     def __init__(self, in_channels,out_channels):
         super().__init__()
-        ###
+
         self.add_module('conv', nn.Conv2d(in_channels=in_channels, out_channels=16,
                                           kernel_size=(1, 1), stride=1, padding=0, bias=True))
         self.add_module('norm', nn.BatchNorm2d(16))
         self.add_module('relu', nn.ReLU(inplace=True))
 
-        ###
         self.add_module('conv_b', nn.Conv2d(in_channels=16, out_channels=48,
                                             kernel_size=(3, 3), stride=1, padding=0, bias=True))
         self.add_module('norm_b', nn.BatchNorm2d(48))
         self.add_module('relu_b', nn.ReLU(inplace=True))
-
-        ###
 
         self.add_module('conv_c', nn.Conv2d(in_channels=48, out_channels=out_channels,
                                             kernel_size=(1, 1), stride=1, padding=0, bias=True))
@@ -60,6 +55,7 @@ class Dblock_more_dilate(nn.Module):
         self.dilate3 = nn.Conv2d(channel, channel, kernel_size=3, dilation=4, padding=4)
         self.dilate4 = nn.Conv2d(channel, channel, kernel_size=3, dilation=8, padding=8)
         self.dilate5 = nn.Conv2d(channel, channel, kernel_size=3, dilation=16, padding=16)
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
                 if m.bias is not None:
@@ -72,6 +68,7 @@ class Dblock_more_dilate(nn.Module):
         dilate4_out = nonlinearity(self.dilate4(dilate3_out))
         dilate5_out = nonlinearity(self.dilate5(dilate4_out))
         out = x + dilate1_out + dilate2_out + dilate3_out + dilate4_out + dilate5_out
+
         return out
 
 
@@ -82,7 +79,7 @@ class Dblock(nn.Module):
         self.dilate2 = nn.Conv2d(channel, channel, kernel_size=3, dilation=2, padding=2)
         self.dilate3 = nn.Conv2d(channel, channel, kernel_size=3, dilation=4, padding=4)
         self.dilate4 = nn.Conv2d(channel, channel, kernel_size=3, dilation=8, padding=8)
-        # self.dilate5 = nn.Conv2d(channel, channel, kernel_size=3, dilation=16, padding=16)
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
                 if m.bias is not None:
@@ -93,8 +90,8 @@ class Dblock(nn.Module):
         dilate2_out = nonlinearity(self.dilate2(dilate1_out))
         dilate3_out = nonlinearity(self.dilate3(dilate2_out))
         dilate4_out = nonlinearity(self.dilate4(dilate3_out))
-        # dilate5_out = nonlinearity(self.dilate5(dilate4_out))
         out = x + dilate1_out + dilate2_out + dilate3_out + dilate4_out  # + dilate5_out
+        
         return out
 
 
@@ -124,6 +121,7 @@ class DecoderBlock(nn.Module):
         x = self.conv3(x)
         x = self.norm3(x)
         x = self.relu3(x)
+
         return x
 
 
@@ -155,7 +153,6 @@ class DinkNet34_less_pool(nn.Module):
         self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
     def forward(self, x):
-        # Encoder
         x = self.firstconv(x)
         x = self.firstbn(x)
         x = self.firstrelu(x)
@@ -164,15 +161,12 @@ class DinkNet34_less_pool(nn.Module):
         e2 = self.encoder2(e1)
         e3 = self.encoder3(e2)
 
-        # Center
         e3 = self.dblock(e3)
 
-        # Decoder
         d3 = self.decoder3(e3) + e2
         d2 = self.decoder2(d3) + e1
         d1 = self.decoder1(d2)
 
-        # Final Classification
         out = self.finaldeconv1(d1)
         out = self.finalrelu1(out)
         out = self.finalconv2(out)
@@ -218,7 +212,6 @@ class DinkNet34(nn.Module):
             self.finalconvLR = nn.Conv2d(32+n_classes_seg, 2, 1, stride=1, padding=0, bias=True)
 
     def forward(self, x):
-        # Encoder
         x = self.firstconv(x)
         x = self.firstbn(x)
         x = self.firstrelu(x)
@@ -228,10 +221,8 @@ class DinkNet34(nn.Module):
         e3 = self.encoder3(e2)
         e4 = self.encoder4(e3)
 
-        # Center
         e4 = self.dblock(e4)
 
-        # Decoder
         d4 = self.decoder4(e4) + e3
         d3 = self.decoder3(d4) + e2
 
@@ -239,7 +230,6 @@ class DinkNet34(nn.Module):
         if e1.shape[2] != decoder_out_this.shape[2] or e1.shape[3] != decoder_out_this.shape[3]:
             decoder_out_this = F.interpolate(decoder_out_this, size=(e1.shape[2], e1.shape[3]), mode="bilinear", align_corners=True)
             d2 = decoder_out_this + e1
-        # d2 = self.decoder2(d3) + e1
 
         d1 = self.decoder1(d2)
 
@@ -254,7 +244,6 @@ class DinkNet34(nn.Module):
         backbone_dlinknet = torch.cat([backbone, outsegrelu], 1)
 
         outcent_final = self.finalconvCent(backbone_dlinknet)
-        # outseg_final  = F.softmax(outseg)
         outseg_final = outseg
 
         if self.n_channels_reg == 1:
@@ -293,7 +282,6 @@ class DinkNet50(nn.Module):
         self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
     def forward(self, x):
-        # Encoder
         x = self.firstconv(x)
         x = self.firstbn(x)
         x = self.firstrelu(x)
@@ -303,10 +291,8 @@ class DinkNet50(nn.Module):
         e3 = self.encoder3(e2)
         e4 = self.encoder4(e3)
 
-        # Center
         e4 = self.dblock(e4)
 
-        # Decoder
         d4 = self.decoder4(e4) + e3
         d3 = self.decoder3(d4) + e2
         d2 = self.decoder2(d3) + e1
@@ -349,7 +335,6 @@ class DinkNet101(nn.Module):
         self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
     def forward(self, x):
-        # Encoder
         x = self.firstconv(x)
         x = self.firstbn(x)
         x = self.firstrelu(x)
@@ -359,10 +344,8 @@ class DinkNet101(nn.Module):
         e3 = self.encoder3(e2)
         e4 = self.encoder4(e3)
 
-        # Center
         e4 = self.dblock(e4)
 
-        # Decoder
         d4 = self.decoder4(e4) + e3
         d3 = self.decoder3(d4) + e2
         d2 = self.decoder2(d3) + e1
@@ -403,7 +386,6 @@ class LinkNet34(nn.Module):
         self.finalconv3 = nn.Conv2d(32, num_classes, 2, padding=1)
 
     def forward(self, x):
-        # Encoder
         x = self.firstconv(x)
         x = self.firstbn(x)
         x = self.firstrelu(x)
@@ -413,7 +395,6 @@ class LinkNet34(nn.Module):
         e3 = self.encoder3(e2)
         e4 = self.encoder4(e3)
 
-        # Decoder
         d4 = self.decoder4(e4) + e3
         d3 = self.decoder3(d4) + e2
         d2 = self.decoder2(d3) + e1
@@ -426,9 +407,7 @@ class LinkNet34(nn.Module):
 
         return F.sigmoid(out)
 
-#####################################################################################################################
-# ERF-Net
-#####################################################################################################################
+
 class DownsamplerBlock(nn.Module):
     def __init__(self, ninput, noutput):
         super().__init__()
@@ -485,7 +464,7 @@ class non_bottleneck_1d(nn.Module):
 
         if (self.dropout.p != 0):
             output = self.dropout(output)
-        return F.relu(output + input)  # +input = identity (residual connection)
+        return F.relu(output + input)  
 
 
 class Encoder(nn.Module):
@@ -497,12 +476,12 @@ class Encoder(nn.Module):
 
         self.layers.append(DownsamplerBlock(16, 64))
 
-        for x in range(0, 5):  # 5 times
+        for x in range(0, 5): 
             self.layers.append(non_bottleneck_1d(64, 0.03, 1))
 
         self.layers.append(DownsamplerBlock(64, 128))
 
-        for x in range(0, 2):  # 2 times
+        for x in range(0, 2): 
             self.layers.append(non_bottleneck_1d(128, 0.3, 2))
             self.layers.append(non_bottleneck_1d(128, 0.3, 4))
             self.layers.append(non_bottleneck_1d(128, 0.3, 8))
@@ -574,7 +553,6 @@ class Decoder(nn.Module):
         backbone_erfnet = torch.cat([backbone, outsegrelu], 1)
 
         outcent_final = self.finalconvCent(backbone_erfnet)
-        # outseg_final  = F.softmax(outseg)
         outseg_final = outseg
 
         if self.n_channels_reg == 1:
@@ -584,7 +562,6 @@ class Decoder(nn.Module):
             return outseg_final, outcent_final, outLR_final
 
 
-# ERFNet
 class ERFNet(nn.Module):
     def __init__(self, n_classes_seg=19, n_channels_reg=3):
         super().__init__()
@@ -596,15 +573,10 @@ class ERFNet(nn.Module):
         if only_encode:
             return self.encoder.forward(input, predict=True)
         else:
-            output = self.encoder(input)  # predict=False by default
+            output = self.encoder(input)  
             return self.decoder.forward(output)
 
 
-
-
-##########################################################################
-# BiSeNet V2
-##########################################################################
 class ConvBNReLU(nn.Module):
 
     def __init__(self, in_chan, out_chan, ks=3, stride=1, padding=1,
@@ -625,7 +597,6 @@ class ConvBNReLU(nn.Module):
 
 
 class StemBlock(nn.Module):
-
     def __init__(self):
         super(StemBlock, self).__init__()
         self.conv = ConvBNReLU(3, 16, 3, stride=2)
@@ -647,7 +618,6 @@ class StemBlock(nn.Module):
 
 
 class CEBlock(nn.Module):
-
     def __init__(self):
         super(CEBlock, self).__init__()
         self.bn = nn.BatchNorm2d(128)
@@ -664,7 +634,6 @@ class CEBlock(nn.Module):
 
 
 class GELayerS1(nn.Module):
-
     def __init__(self, in_chan, out_chan, exp_ratio=6):
         super(GELayerS1, self).__init__()
         mid_chan = in_chan * exp_ratio
@@ -674,7 +643,7 @@ class GELayerS1(nn.Module):
                 in_chan, mid_chan, kernel_size=3, stride=1,
                 padding=1, groups=in_chan, bias=False),
             nn.BatchNorm2d(mid_chan),
-            nn.ReLU(inplace=True), # not shown in paper
+            nn.ReLU(inplace=True), 
         )
         self.conv2 = nn.Sequential(
             nn.Conv2d(
@@ -695,7 +664,6 @@ class GELayerS1(nn.Module):
 
 
 class GELayerS2(nn.Module):
-
     def __init__(self, in_chan, out_chan, exp_ratio=6):
         super(GELayerS2, self).__init__()
         mid_chan = in_chan * exp_ratio
@@ -711,7 +679,7 @@ class GELayerS2(nn.Module):
                 mid_chan, mid_chan, kernel_size=3, stride=1,
                 padding=1, groups=mid_chan, bias=False),
             nn.BatchNorm2d(mid_chan),
-            nn.ReLU(inplace=True), # not shown in paper
+            nn.ReLU(inplace=True), 
         )
         self.conv2 = nn.Sequential(
             nn.Conv2d(
@@ -740,12 +708,12 @@ class GELayerS2(nn.Module):
         shortcut = self.shortcut(x)
         feat = feat + shortcut
         feat = self.relu(feat)
+
         return feat
 
 
 
 class DetailBranch(nn.Module):
-
     def __init__(self):
         super(DetailBranch, self).__init__()
         self.S1 = nn.Sequential(
@@ -767,6 +735,7 @@ class DetailBranch(nn.Module):
         feat = self.S1(x)
         feat = self.S2(feat)
         feat = self.S3(feat)
+
         return feat
 
 
@@ -798,11 +767,11 @@ class SegmentBranch(nn.Module):
         feat4 = self.S4(feat3)
         feat5_4 = self.S5_4(feat4)
         feat5_5 = self.S5_5(feat5_4)
+
         return feat2, feat3, feat4, feat5_4, feat5_5
 
 
 class BGALayer(nn.Module):
-
     def __init__(self):
         super(BGALayer, self).__init__()
         self.left1 = nn.Sequential(
@@ -836,14 +805,13 @@ class BGALayer(nn.Module):
                 128, 128, kernel_size=1, stride=1,
                 padding=0, bias=False),
         )
-        # self.up1 = nn.Upsample(scale_factor=4)
-        # self.up2 = nn.Upsample(scale_factor=4)
+
         self.conv = nn.Sequential(
             nn.Conv2d(
                 128, 128, kernel_size=3, stride=1,
                 padding=1, bias=False),
             nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True), # not shown in paper
+            nn.ReLU(inplace=True), 
         )
 
     def forward(self, x_d, x_s):
@@ -852,18 +820,16 @@ class BGALayer(nn.Module):
         left2 = self.left2(x_d)
         right1 = self.right1(x_s)
         right2 = self.right2(x_s)
-        # right1 = self.up1(right1)
 
         size_in = left1.size()
         right1 =  F.relu(F.interpolate(right1, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True))
 
-        # left = left1 * torch.sigmoid(right1)
         left = left1 * right1
         right = left2 * F.relu(right2)
-        # right = self.up2(right)
 
         right = F.interpolate(right, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
         out = self.conv(left + right)
+
         return out
 
 class SegmentHead(nn.Module):
@@ -889,6 +855,7 @@ class SegmentHead(nn.Module):
         feat = self.conv(x)
         feat = self.drop(feat)
         feat = self.conv_out(feat)
+
         return feat
 
 class SegmentationHead(nn.Module):
@@ -903,6 +870,7 @@ class SegmentationHead(nn.Module):
 
     def forward(self, x):
         feat = self.conv_out(x)
+
         return feat
 
 
@@ -910,12 +878,12 @@ class Bisenet_v2(nn.Module):
     def __init__(self, n_classes_seg=19, n_channels_reg=3):
         super().__init__()
         self.n_channels_reg = n_channels_reg
+        self.n_classes_seg  = n_classes_seg
 
         self.detail  = DetailBranch()
         self.segment = SegmentBranch()
         self.bga = BGALayer()
         self.head = SegmentHead(128, 1024, n_classes_seg, up_factor=8)
-        # self.head = SegmentationHead(128, n_classes_seg)
         self.aux2   = SegmentHead(16, 128, n_classes_seg, up_factor=4)
         self.aux3   = SegmentHead(32, 128, n_classes_seg, up_factor=8)
         self.aux4   = SegmentHead(64, 128, n_classes_seg, up_factor=16)
@@ -925,13 +893,10 @@ class Bisenet_v2(nn.Module):
         if n_channels_reg == 3:
             self.finalconvLR = nn.Conv2d(128+n_classes_seg, 2, 1, stride=1, padding=0, bias=True)
 
-        self.finalconvAFM = MyDecoder(in_channels=128+n_classes_seg, out_channels=1)
-
-        # self.init_weights()
-
+        if n_classes_seg == 4:
+            self.finalconvAFM = MyDecoder(in_channels=128+n_classes_seg, out_channels=1)
 
     def forward(self,x):
-
         size_in = x.size()
         feat_d = self.detail(x)
         feat2, feat3, feat4, feat5_4, feat_s = self.segment(x)
@@ -952,7 +917,9 @@ class Bisenet_v2(nn.Module):
             out_leftright  = self.finalconvLR(backbone)
             out_leftright_final = F.interpolate(out_leftright, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
         
-        out_AFM = self.finalconvAFM(backbone)
+        if self.n_classes_seg == 4:
+            out_AFM = self.finalconvAFM(backbone)
+            out_AFM_final        = F.interpolate(out_AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
         outseg_final = F.interpolate(outseg, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
@@ -962,12 +929,14 @@ class Bisenet_v2(nn.Module):
         out_aux4 = F.interpolate(logits_aux5_4, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
         out_centerline_final = F.interpolate(out_centerline, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
-        out_AFM_final        = F.interpolate(out_AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
         if self.n_channels_reg == 3:
             return outseg_final, out_centerline_final, out_leftright_final,out_aux1,out_aux2,out_aux3,out_aux4
         elif self.n_channels_reg == 1:
-            return outseg_final, out_centerline_final, out_AFM_final, out_aux1,out_aux2,out_aux3,out_aux4,
+            if self.n_classes_seg == 4:
+                return outseg_final, out_centerline_final, out_AFM_final, out_aux1,out_aux2,out_aux3,out_aux4
+            else:
+                return outseg_final, out_centerline_final, out_aux1,out_aux2,out_aux3,out_aux4
 
 
     def init_weights(self):
@@ -981,7 +950,6 @@ class Bisenet_v2(nn.Module):
                 else:
                     nn.init.ones_(module.weight)
                 nn.init.zeros_(module.bias)
-        # self.load_pretrain()
 
 
     def load_pretrain(self):

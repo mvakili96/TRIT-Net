@@ -27,7 +27,6 @@ def get_scheduler(optimizer, scheduler_dict):
 
     warmup_dict = {}
     if "warmup_iters" in scheduler_dict:
-        # This can be done in a more pythonic way...
         warmup_dict["warmup_iters"] = scheduler_dict.get("warmup_iters", 100)
         warmup_dict["mode"] = scheduler_dict.get("warmup_mode", "linear")
         warmup_dict["gamma"] = scheduler_dict.get("warmup_factor", 0.2)
@@ -43,5 +42,7 @@ def get_scheduler(optimizer, scheduler_dict):
         scheduler_dict.pop("warmup_factor", None)
 
         base_scheduler = key2scheduler[s_type](optimizer, **scheduler_dict)
+
         return WarmUpLR(optimizer, base_scheduler, **warmup_dict)
+    
     return key2scheduler[s_type](optimizer, **scheduler_dict)

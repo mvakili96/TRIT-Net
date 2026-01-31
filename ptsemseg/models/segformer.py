@@ -1,4 +1,3 @@
-
 import torch
 from einops import rearrange
 from torch import nn
@@ -28,9 +27,6 @@ class ConvLayer(nn.Sequential):
 
 
 class MyDecoder(nn.Sequential):
-    ###======================================================================================================
-    ### MyDecoder::init()
-    ###======================================================================================================
     def __init__(self, in_channels,out_channels):
         super().__init__()
         ###
@@ -50,11 +46,6 @@ class MyDecoder(nn.Sequential):
         self.add_module('conv_c', nn.Conv2d(in_channels=48, out_channels=out_channels,
                                             kernel_size=(1, 1), stride=1, padding=0, bias=True))
 
-
-
-    ###======================================================================================================
-    ### MyDecoder::forward()
-    ###======================================================================================================
     def forward(self, x):
         return super().forward(x)
 
@@ -283,13 +274,8 @@ class SegFormerSegmentationHead(nn.Module):
         out_seg  = self.predict(x_fuse)
         return x_fuse,out_seg
 
-##############################################################################################
-##############################################################################################
-##############################################################################################
-##############################################################################################
-
 class SegFormer(nn.Module):
-    def __init__(self,n_classes_seg = 19, n_channels_reg = 3):
+    def __init__(self,n_classes_seg = 19):
         in_channels=3
         widths=[64, 128, 256, 512]
         depths=[3, 4, 6, 3]
@@ -300,7 +286,8 @@ class SegFormer(nn.Module):
         mlp_expansions=[4, 4, 4, 4]
         decoder_channels=256
         scale_factors=[8, 4, 2, 1]
-        num_classes=n_classes_seg
+
+        self.num_classes=n_classes_seg
         drop_prob = 0.0
 
         super().__init__()
@@ -317,14 +304,15 @@ class SegFormer(nn.Module):
         )
         self.decoder = SegFormerDecoder(decoder_channels, widths[::-1], scale_factors)
         self.head = SegFormerSegmentationHead(
-            decoder_channels, num_classes, num_features=len(widths)
+            decoder_channels, self.num_classes, num_features=len(widths)
         )
         self.relu_on_finalLayer = nn.ReLU(inplace=True)
-        self.decoder_centerline = nn.Conv2d(in_channels=decoder_channels+num_classes,
+        self.decoder_centerline = nn.Conv2d(in_channels=decoder_channels+self.num_classes,
                                                   out_channels=1, kernel_size=1, stride=1,
                                                   padding=0, bias=True)
-        self.rpnet_decoder_AFM = MyDecoder(in_channels=decoder_channels+num_classes, out_channels=1)
 
+        if self.num_classes == 4:
+            self.rpnet_decoder_AFM = MyDecoder(in_channels=decoder_channels+self.num_classes, out_channels=1)
 
     def forward(self, x):
         size_in = x.size()
@@ -337,14 +325,16 @@ class SegFormer(nn.Module):
         backbone_segformer = torch.cat([backbone, out_seg_after_relu], 1)
 
         centerline         = self.decoder_centerline(backbone_segformer)
-        AFM            = self.rpnet_decoder_AFM(backbone_segformer)
 
+        if self.num_classes == 4:
+            AFM = self.rpnet_decoder_AFM(backbone_segformer)
+            AFM = F.interpolate(AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
         segmentation  = F.interpolate(out_seg, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
         centerline    = F.interpolate(centerline, size=(size_in[2], size_in[3]), mode="bilinear",align_corners=True)
-        AFM           = F.interpolate(AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
+        
+        if self.num_classes == 4:
+            return segmentation, centerline, AFM 
 
-
-
-        return segmentation, centerline, AFM #segmentation.sum(dim=1, keepdim=True)
-
+        elif self.num_classes == 3:
+            return segmentation, centerline

@@ -1,34 +1,22 @@
 model:
-    arch: seghardnet
+    arch: rpnet_c
 weight_init_t:
-    rpnet_c: './runs/hardnet/cur/Mybest_63000.pkl'
-    dlinknet_34: './runs/hardnet/cur/Mybest_dlink.pkl'    # used to be 19600 for original railsem
-    erfnet: './runs/hardnet/cur/Mybest_erf.pkl'           # used to be 6000 for original railsem
-    bisenet_v2: './runs/hardnet/cur/Mybest_bis_4class&cen.pkl'       # used to be 20000 for original railsem
-    segformer: './runs/hardnet/cur/Mybest_Segf_DR.pkl'
-    seghardnet: './runs/hardnet/cur/TRIT-Net-Encoder_step077000.pth' 
-    mask2former: './runs/hardnet/cur/Mybest_73000.pkl'
-weight_init_p:
-    rpnet_c: './runs/hardnet/cur/hardnet_best.pkl'
-    dlinknet_34: -1
-    erfnet: './runs/hardnet/cur/erfnet.pth'
-    bisenet_v2: -1
-    segformer: -1
-    seghardnet: -1
-    mask2former: -1
+    rpnet_c: ./runs/hardnet/cur/Mybest_63000.pkl
+    dlinknet_34: ./runs/hardnet/cur/Mybest_dlink.pkl   # used to be 19600 for original railsem
+    erfnet: ./runs/hardnet/cur/Mybest_erf.pkl          # used to be 6000 for original railsem
+    bisenet_v2: ./runs/hardnet/cur/Mybest_bis_4class&cen.pkl      # used to be 20000 for original railsem
+    segformer: ./runs/hardnet/cur/Mybest_Segf_DR.pkl
+    seghardnet: ./runs/hardnet/cur/Mybest_90000_90.pkl
+    mask2former: ./runs/hardnet/cur/Mybest_73000.pkl
 data:
-    dataset: railsem19_seg_triplet_b
-    train_split: train
-    val_split: val
-    img_rows: 540
-    img_cols: 960
-    path: None
-    sbd_path: None
+    root: ./data/RailDB/
+    rgb_mean: [113.95, 118.05, 110.18]
+    rgb_std:  [78.37, 68.79, 65.80] 
+    train_split: 6000
 training:
     num_seg_classes: 4                        
-    num_reg_channels: 1
     train_iters: 90000
-    batch_size: 16
+    batch_size: 4
     val_interval: 1000
     n_workers: 0
     print_interval: 100
@@ -42,13 +30,12 @@ training:
             weight_decay: 0.0005
             momentum: 0.9
     loss:
-        name: 'bootstrapped_cross_entropy'
+        name: bootstrapped_cross_entropy
         min_K: 8192
         loss_th: 0.3
         size_average: True
-        train_val: 0
     lr_schedule: 
-        name: 'poly_lr'
+        name: poly_lr
         max_iter: 90000
     resume: None
     finetune: None

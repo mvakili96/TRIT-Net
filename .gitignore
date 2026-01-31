@@ -9,6 +9,7 @@ Optimized_Design/
 Network_Design_Optimization/
 Mask2Former/
 detectron2/
+data/
 
 train_py/*
 !train_py/*.py
