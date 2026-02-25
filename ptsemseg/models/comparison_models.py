@@ -24,7 +24,6 @@ class ConvLayer(nn.Sequential):
             self.add_module('norm', nn.BatchNorm2d(out_channels))
             self.add_module('relu', nn.ReLU(inplace=True))
 
-
     def forward(self, x):
         return super().forward(x)
 
@@ -124,65 +123,14 @@ class DecoderBlock(nn.Module):
 
         return x
 
-
-class DinkNet34_less_pool(nn.Module):
-    def __init__(self, num_classes=1):
-        super(DinkNet34_more_dilate, self).__init__()
-
-        filters = [64, 128, 256, 512]
-        resnet = models.resnet34(pretrained=True)
-
-        self.firstconv = resnet.conv1
-        self.firstbn = resnet.bn1
-        self.firstrelu = resnet.relu
-        self.firstmaxpool = resnet.maxpool
-        self.encoder1 = resnet.layer1
-        self.encoder2 = resnet.layer2
-        self.encoder3 = resnet.layer3
-
-        self.dblock = Dblock_more_dilate(256)
-
-        self.decoder3 = DecoderBlock(filters[2], filters[1])
-        self.decoder2 = DecoderBlock(filters[1], filters[0])
-        self.decoder1 = DecoderBlock(filters[0], filters[0])
-
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
-        self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
-
-    def forward(self, x):
-        x = self.firstconv(x)
-        x = self.firstbn(x)
-        x = self.firstrelu(x)
-        x = self.firstmaxpool(x)
-        e1 = self.encoder1(x)
-        e2 = self.encoder2(e1)
-        e3 = self.encoder3(e2)
-
-        e3 = self.dblock(e3)
-
-        d3 = self.decoder3(e3) + e2
-        d2 = self.decoder2(d3) + e1
-        d1 = self.decoder1(d2)
-
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
-
-        return F.sigmoid(out)
-
-
 class DinkNet34(nn.Module):
-    def __init__(self, n_classes_seg=19, n_channels_reg=3):
+    def __init__(self, n_classes_seg=19):
         super(DinkNet34, self).__init__()
 
         filters = [64, 128, 256, 512]
         resnet = models.resnet34(pretrained=True)
-        self.n_channels_reg = n_channels_reg
+        self.n_classes_seg = n_classes_seg
+
         self.firstconv = resnet.conv1
         self.firstbn = resnet.bn1
         self.firstrelu = resnet.relu
@@ -203,15 +151,17 @@ class DinkNet34(nn.Module):
         self.finalrelu1 = nonlinearity
         self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.finalrelu2 = nonlinearity
+
         self.finalconvSeg = nn.Conv2d(32, n_classes_seg, 3, padding=1)
         self.finalreluSeg = nonlinearity
 
         self.finalconvCent = nn.Conv2d(32+n_classes_seg, 1, 1, stride=1, padding=0, bias=True)
 
-        if n_channels_reg == 3:
-            self.finalconvLR = nn.Conv2d(32+n_classes_seg, 2, 1, stride=1, padding=0, bias=True)
+        if self.n_classes_seg == 4:
+            self.finalconvAFM = MyDecoder(in_channels=32+n_classes_seg, out_channels=1)
 
     def forward(self, x):
+        size_in = x.size()
         x = self.firstconv(x)
         x = self.firstbn(x)
         x = self.firstrelu(x)
@@ -238,174 +188,25 @@ class DinkNet34(nn.Module):
         out = self.finalconv2(out)
 
         backbone   = self.finalrelu2(out)
+
         outseg     = self.finalconvSeg(backbone)
         outsegrelu = self.finalreluSeg(outseg)
 
         backbone_dlinknet = torch.cat([backbone, outsegrelu], 1)
 
         outcent_final = self.finalconvCent(backbone_dlinknet)
-        outseg_final = outseg
+        outcent_final = F.interpolate(outcent_final, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
-        if self.n_channels_reg == 1:
-            return outseg_final, outcent_final
-        elif self.n_channels_reg == 3:
-            outLR_final = self.finalconvLR(backbone_dlinknet)
-            return outseg_final, outcent_final, outLR_final
+        if self.n_classes_seg == 4:
+            out_AFM = self.finalconvAFM(backbone_dlinknet)
+            out_AFM_final = F.interpolate(out_AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
+        out_seg_final = F.interpolate(outseg, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
-class DinkNet50(nn.Module):
-    def __init__(self, num_classes=1):
-        super(DinkNet50, self).__init__()
-
-        filters = [256, 512, 1024, 2048]
-        resnet = models.resnet50(pretrained=True)
-        self.firstconv = resnet.conv1
-        self.firstbn = resnet.bn1
-        self.firstrelu = resnet.relu
-        self.firstmaxpool = resnet.maxpool
-        self.encoder1 = resnet.layer1
-        self.encoder2 = resnet.layer2
-        self.encoder3 = resnet.layer3
-        self.encoder4 = resnet.layer4
-
-        self.dblock = Dblock_more_dilate(2048)
-
-        self.decoder4 = DecoderBlock(filters[3], filters[2])
-        self.decoder3 = DecoderBlock(filters[2], filters[1])
-        self.decoder2 = DecoderBlock(filters[1], filters[0])
-        self.decoder1 = DecoderBlock(filters[0], filters[0])
-
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
-        self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
-
-    def forward(self, x):
-        x = self.firstconv(x)
-        x = self.firstbn(x)
-        x = self.firstrelu(x)
-        x = self.firstmaxpool(x)
-        e1 = self.encoder1(x)
-        e2 = self.encoder2(e1)
-        e3 = self.encoder3(e2)
-        e4 = self.encoder4(e3)
-
-        e4 = self.dblock(e4)
-
-        d4 = self.decoder4(e4) + e3
-        d3 = self.decoder3(d4) + e2
-        d2 = self.decoder2(d3) + e1
-        d1 = self.decoder1(d2)
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
-
-        return F.sigmoid(out)
-
-
-class DinkNet101(nn.Module):
-    def __init__(self, num_classes=1):
-        super(DinkNet101, self).__init__()
-
-        filters = [256, 512, 1024, 2048]
-        resnet = models.resnet101(pretrained=True)
-        self.firstconv = resnet.conv1
-        self.firstbn = resnet.bn1
-        self.firstrelu = resnet.relu
-        self.firstmaxpool = resnet.maxpool
-        self.encoder1 = resnet.layer1
-        self.encoder2 = resnet.layer2
-        self.encoder3 = resnet.layer3
-        self.encoder4 = resnet.layer4
-
-        self.dblock = Dblock_more_dilate(2048)
-
-        self.decoder4 = DecoderBlock(filters[3], filters[2])
-        self.decoder3 = DecoderBlock(filters[2], filters[1])
-        self.decoder2 = DecoderBlock(filters[1], filters[0])
-        self.decoder1 = DecoderBlock(filters[0], filters[0])
-
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
-        self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
-
-    def forward(self, x):
-        x = self.firstconv(x)
-        x = self.firstbn(x)
-        x = self.firstrelu(x)
-        x = self.firstmaxpool(x)
-        e1 = self.encoder1(x)
-        e2 = self.encoder2(e1)
-        e3 = self.encoder3(e2)
-        e4 = self.encoder4(e3)
-
-        e4 = self.dblock(e4)
-
-        d4 = self.decoder4(e4) + e3
-        d3 = self.decoder3(d4) + e2
-        d2 = self.decoder2(d3) + e1
-        d1 = self.decoder1(d2)
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
-
-        return F.sigmoid(out)
-
-
-class LinkNet34(nn.Module):
-    def __init__(self, num_classes=1):
-        super(LinkNet34, self).__init__()
-
-        filters = [64, 128, 256, 512]
-        resnet = models.resnet34(pretrained=True)
-        self.firstconv = resnet.conv1
-        self.firstbn = resnet.bn1
-        self.firstrelu = resnet.relu
-        self.firstmaxpool = resnet.maxpool
-        self.encoder1 = resnet.layer1
-        self.encoder2 = resnet.layer2
-        self.encoder3 = resnet.layer3
-        self.encoder4 = resnet.layer4
-
-        self.decoder4 = DecoderBlock(filters[3], filters[2])
-        self.decoder3 = DecoderBlock(filters[2], filters[1])
-        self.decoder2 = DecoderBlock(filters[1], filters[0])
-        self.decoder1 = DecoderBlock(filters[0], filters[0])
-
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 3, stride=2)
-        self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3)
-        self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, 2, padding=1)
-
-    def forward(self, x):
-        x = self.firstconv(x)
-        x = self.firstbn(x)
-        x = self.firstrelu(x)
-        x = self.firstmaxpool(x)
-        e1 = self.encoder1(x)
-        e2 = self.encoder2(e1)
-        e3 = self.encoder3(e2)
-        e4 = self.encoder4(e3)
-
-        d4 = self.decoder4(e4) + e3
-        d3 = self.decoder3(d4) + e2
-        d2 = self.decoder2(d3) + e1
-        d1 = self.decoder1(d2)
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
-
-        return F.sigmoid(out)
+        if self.n_classes_seg == 4:
+            return out_seg_final, outcent_final, out_AFM_final
+        elif self.n_classes_seg == 3:
+            return out_seg_final, outcent_final
 
 
 class DownsamplerBlock(nn.Module):
@@ -470,7 +271,7 @@ class non_bottleneck_1d(nn.Module):
 class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
-        self.initial_block = DownsamplerBlock(5, 16)
+        self.initial_block = DownsamplerBlock(3, 16)
 
         self.layers = nn.ModuleList()
 
@@ -512,10 +313,11 @@ class UpsamplerBlock(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, num_classes, num_channels):
+    def __init__(self, num_classes):
         super().__init__()
-        self.n_channels_reg = num_channels
 
+        self.num_classes = num_classes
+        
         self.layers = nn.ModuleList()
 
         self.layers.append(UpsamplerBlock(128, 64))
@@ -526,40 +328,40 @@ class Decoder(nn.Module):
         self.layers.append(non_bottleneck_1d(16, 0, 1))
         self.layers.append(non_bottleneck_1d(16, 0, 1))
 
-        self.finalconvSeg       = nn.ConvTranspose2d(16, num_classes, 2, stride=2, padding=0, output_padding=0, bias=True)
+        self.finalconvSeg  = nn.ConvTranspose2d(16, num_classes, 2, stride=2, padding=0, output_padding=0, bias=True)
 
         self.finalconvCent = nn.Conv2d(16+num_classes, 1, 1, stride=1, padding=0, bias=True)
 
-        if num_channels == 3:
-            self.finalconvLR = nn.Conv2d(16+num_classes, 2, 1, stride=1, padding=0, bias=True)
+        if num_classes == 4:
+            self.finalconvAFM = MyDecoder(in_channels=16+num_classes, out_channels=1)
 
 
-    def forward(self, input):
+    def forward(self, input, size_in):
         output = input
 
         for layer in self.layers:
             output = layer(output)
 
-
         backbone   = output
         outseg     = self.finalconvSeg(backbone)
         outsegrelu = F.relu(outseg)
-        backbone   = F.interpolate(backbone, size=(540, 960), mode="bilinear", align_corners=True)
 
-        if outsegrelu.shape[2] != backbone.shape[2] or outsegrelu.shape[3] != backbone.shape[3]:
-            outsegrelu = F.interpolate(outsegrelu, size=(540, 960), mode="bilinear", align_corners=True)
-            outseg     = F.interpolate(outseg, size=(540, 960), mode="bilinear", align_corners=True)
-
+        backbone   = F.interpolate(backbone, size=(outseg.size()[2], outseg.size()[3]), mode="bilinear", align_corners=True)
         backbone_erfnet = torch.cat([backbone, outsegrelu], 1)
 
         outcent_final = self.finalconvCent(backbone_erfnet)
-        outseg_final = outseg
+        outcent_final = F.interpolate(outcent_final, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
+        
+        if self.num_classes == 4:
+            out_AFM = self.finalconvAFM(backbone_erfnet)
+            out_AFM_final = F.interpolate(out_AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
-        if self.n_channels_reg == 1:
+        outseg_final = F.interpolate(outseg, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
+
+        if self.num_classes == 4:
+            return outseg_final, outcent_final, out_AFM_final
+        elif self.num_classes == 3:
             return outseg_final, outcent_final
-        elif self.n_channels_reg == 3:
-            outLR_final = self.finalconvLR(backbone_erfnet)
-            return outseg_final, outcent_final, outLR_final
 
 
 class ERFNet(nn.Module):
@@ -567,18 +369,18 @@ class ERFNet(nn.Module):
         super().__init__()
 
         self.encoder = Encoder()
-        self.decoder = Decoder(n_classes_seg, n_channels_reg)
+        self.decoder = Decoder(n_classes_seg)
 
     def forward(self, input, only_encode=False):
         if only_encode:
             return self.encoder.forward(input, predict=True)
         else:
-            output = self.encoder(input)  
-            return self.decoder.forward(output)
+            size = input.size()
+            output = self.encoder(input) 
+            return self.decoder.forward(output,size)
 
 
 class ConvBNReLU(nn.Module):
-
     def __init__(self, in_chan, out_chan, ks=3, stride=1, padding=1,
                  dilation=1, groups=1, bias=False):
         super(ConvBNReLU, self).__init__()
@@ -712,7 +514,6 @@ class GELayerS2(nn.Module):
         return feat
 
 
-
 class DetailBranch(nn.Module):
     def __init__(self):
         super(DetailBranch, self).__init__()
@@ -739,9 +540,7 @@ class DetailBranch(nn.Module):
         return feat
 
 
-
 class SegmentBranch(nn.Module):
-
     def __init__(self):
         super(SegmentBranch, self).__init__()
         self.S1S2 = StemBlock()
@@ -832,6 +631,7 @@ class BGALayer(nn.Module):
 
         return out
 
+
 class SegmentHead(nn.Module):
     def __init__(self, in_chan, mid_chan, n_classes, up_factor=8, aux=False):
         super(SegmentHead, self).__init__()
@@ -858,6 +658,7 @@ class SegmentHead(nn.Module):
 
         return feat
 
+
 class SegmentationHead(nn.Module):
     def __init__(self, in_chan, n_classes):
         super(SegmentationHead, self).__init__()
@@ -875,9 +676,8 @@ class SegmentationHead(nn.Module):
 
 
 class Bisenet_v2(nn.Module):
-    def __init__(self, n_classes_seg=19, n_channels_reg=3):
+    def __init__(self, n_classes_seg=19):
         super().__init__()
-        self.n_channels_reg = n_channels_reg
         self.n_classes_seg  = n_classes_seg
 
         self.detail  = DetailBranch()
@@ -890,8 +690,6 @@ class Bisenet_v2(nn.Module):
         self.aux5_4 = SegmentHead(128, 128, n_classes_seg, up_factor=32)
 
         self.finalconvCent = nn.Conv2d(128+n_classes_seg, 1, 1, stride=1, padding=0, bias=True)
-        if n_channels_reg == 3:
-            self.finalconvLR = nn.Conv2d(128+n_classes_seg, 2, 1, stride=1, padding=0, bias=True)
 
         if n_classes_seg == 4:
             self.finalconvAFM = MyDecoder(in_channels=128+n_classes_seg, out_channels=1)
@@ -913,13 +711,10 @@ class Bisenet_v2(nn.Module):
         backbone = torch.cat([feat_head, outseg_relu], 1)
 
         out_centerline = self.finalconvCent(backbone)
-        if self.n_channels_reg == 3:
-            out_leftright  = self.finalconvLR(backbone)
-            out_leftright_final = F.interpolate(out_leftright, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
-        
+      
         if self.n_classes_seg == 4:
             out_AFM = self.finalconvAFM(backbone)
-            out_AFM_final        = F.interpolate(out_AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
+            out_AFM_final = F.interpolate(out_AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
         outseg_final = F.interpolate(outseg, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
@@ -930,14 +725,10 @@ class Bisenet_v2(nn.Module):
 
         out_centerline_final = F.interpolate(out_centerline, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
-        if self.n_channels_reg == 3:
-            return outseg_final, out_centerline_final, out_leftright_final,out_aux1,out_aux2,out_aux3,out_aux4
-        elif self.n_channels_reg == 1:
-            if self.n_classes_seg == 4:
-                return outseg_final, out_centerline_final, out_AFM_final, out_aux1,out_aux2,out_aux3,out_aux4
-            else:
-                return outseg_final, out_centerline_final, out_aux1,out_aux2,out_aux3,out_aux4
-
+        if self.n_classes_seg == 4:
+            return outseg_final, out_centerline_final, out_AFM_final,out_aux1,out_aux2,out_aux3,out_aux4
+        elif self.n_classes_seg == 3:
+            return outseg_final, out_centerline_final, out_aux1,out_aux2,out_aux3,out_aux4
 
     def init_weights(self):
         for name, module in self.named_modules():
@@ -950,7 +741,6 @@ class Bisenet_v2(nn.Module):
                 else:
                     nn.init.ones_(module.weight)
                 nn.init.zeros_(module.bias)
-
 
     def load_pretrain(self):
         state = modelzoo.load_url(backbone_url)

@@ -17,9 +17,7 @@ class RailSem19_SegTriplet_b_Loader(data.Dataset):
 
 
         self.type_trainval          = type_trainval
-
-        self.rgb_mean               = np.array([128.0, 128.0, 128.0])/255.0     
-        self.rgb_std                = np.array([1.0, 1.0, 1.0])               
+              
         self.n_classes              = configs["training"]["num_seg_classes"]
         self.root_dataset           = configs["data"]["root"]
         self.train_split            = configs["data"]["train_split"]
@@ -66,9 +64,9 @@ class RailSem19_SegTriplet_b_Loader(data.Dataset):
         img_label_seg_rsz_uint8 = myhelper_railsem19_b.read_label_seg_png_from_file(full_fnames_label_seg_png,
                                                                                     self.size_out)
 
-        labelmap_centerline = myhelper_railsem19_b.read_triplet_image_from_file(full_fname_triplet_image,self.size_img_rsz)
+        labelmap_centerline = myhelper_railsem19_b.read_triplet_image_from_file(full_fname_triplet_image,self.size_out)
 
-        AFM  = myhelper_railsem19_b.read_triplet_image_from_file(full_fnames_img_AFM, self.size_img_rsz)
+        AFM  = myhelper_railsem19_b.read_triplet_image_from_file(full_fnames_img_AFM, self.size_out)
 
         set_idx_invalid = (img_label_seg_rsz_uint8 > 18)
         img_label_seg_rsz_uint8[set_idx_invalid] = 250
