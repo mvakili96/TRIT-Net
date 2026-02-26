@@ -13,3 +13,5 @@ data/
 
 train_py/*
 !train_py/*.py
+
+.github/

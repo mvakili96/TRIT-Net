@@ -1,23 +1,31 @@
 model:
-    arch: rpnet_c
+    arch: bisenet_v2
 weight_init_t:
     rpnet_c: ./runs/hardnet/cur/Mybest_63000.pkl
     dlinknet_34: ./runs/hardnet/cur/Mybest_dlink.pkl   # used to be 19600 for original railsem
     erfnet: ./runs/hardnet/cur/Mybest_erf.pkl          # used to be 6000 for original railsem
     bisenet_v2: ./runs/hardnet/cur/Mybest_bis_4class&cen.pkl      # used to be 20000 for original railsem
     segformer: ./runs/hardnet/cur/Mybest_Segf_DR.pkl
-    seghardnet: ./runs/hardnet/cur/Mybest_90000_90.pkl
+    seghardnet: ./runs/hardnet/cur/TRIT-Net-Encoder_step077000.pth
     mask2former: ./runs/hardnet/cur/Mybest_73000.pkl
+network_image_sizes:
+    rpnet_c: {h: 540, w: 960}
+    dlinknet_34: {h: 540, w: 960}
+    erfnet: {h: 540, w: 960}
+    bisenet_v2: {h: 540, w: 960}
+    segformer: {h: 544, w: 960}
+    seghardnet: {h: 544, w: 960}
+    mask2former: {h: 544, w: 960}
 data:
-    root: ./data/RailDB/
+    root: ./data/RailSem19/
     rgb_mean: [113.95, 118.05, 110.18]
     rgb_std:  [78.37, 68.79, 65.80] 
-    train_split: 6000
+    train_split: 6200
 training:
     num_seg_classes: 4                        
     train_iters: 90000
     batch_size: 4
-    val_interval: 1000
+    val_interval: 10000
     n_workers: 0
     print_interval: 100
     optimizer:

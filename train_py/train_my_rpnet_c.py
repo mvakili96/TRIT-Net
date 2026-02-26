@@ -29,7 +29,6 @@ from ptsemseg.optimizers        import get_optimizer
 from helpers_my                 import my_utils
 from helpers_my                 import my_loss               # Center/LeftRight Loss
 
-
 def train(cfg, writer, logger):
 
     torch.manual_seed(cfg.get("seed", 1337))
@@ -39,23 +38,18 @@ def train(cfg, writer, logger):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    arch = cfg.get("model", {}).get("arch")
+    if arch in cfg["network_image_sizes"]:
+        network_input_size = cfg["network_image_sizes"][arch]
+    else:
+        raise KeyError(f"architecture '{arch}' not found in cfg['network_image_sizes'] and no default is available")
+
     data_loader   = get_loader()
 
     n_classes_segmentation = cfg["training"]["num_seg_classes"]
 
-    #TODO
-    network_image_sizes = {
-        "rpnet_c": {'h': 540,  'w': 960},
-        "dlinknet_34": {'h': 540,  'w': 960},
-        "erfnet": {'h': 540, 'w': 960},
-        "bisenet_v2": {'h': 540, 'w': 960},
-        "segformer": {'h': 544, 'w': 960},
-        "seghardnet": {'h': 544, 'w': 960},
-        "mask2former": {'h': 544, 'w': 960},
-    }
-
-    t_loader_head = data_loader(configs = cfg, type_trainval="train", network_input_size = network_image_sizes[cfg["model"]["arch"]])
-    v_loader_head = data_loader(configs = cfg, type_trainval="val", network_input_size = network_image_sizes[cfg["model"]["arch"]])
+    t_loader_head = data_loader(configs=cfg, type_trainval="train", network_input_size=network_input_size)
+    v_loader_head = data_loader(configs=cfg, type_trainval="val", network_input_size=network_input_size)
 
     t_loader_batch = data.DataLoader(
         t_loader_head,
