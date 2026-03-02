@@ -11,7 +11,11 @@ import torch.nn as nn
 import sys
 import cv2
 
-sys.path.insert(0, "/home/m_vakili_am/Projects/TRIT-Net/")   # project root
+# Insert repo root (relative) into sys.path so imports work when running from train_py/
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
+
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 from torch.utils                import data
@@ -29,8 +33,20 @@ from ptsemseg.optimizers        import get_optimizer
 from helpers_my                 import my_utils
 from helpers_my                 import my_loss               # Center/LeftRight Loss
 
-def train(cfg, writer, logger):
+def train(cfg: dict, writer: SummaryWriter, logger) -> None:
+    """Main training loop.
 
+    Args:
+        cfg: configuration dictionary loaded from YAML (see configs/)
+        writer: TensorBoard SummaryWriter instance
+        logger: logger instance from `ptsemseg.utils.get_logger`
+
+    This function preserves existing training behavior. It reads `cfg["model"]["arch"]`
+    and resolves `network_input_size` from `cfg['network_image_sizes']`. Seeds are set
+    from `cfg['seed']` when present.
+    """
+
+    # deterministic seeds (configurable)
     torch.manual_seed(cfg.get("seed", 1337))
     torch.cuda.manual_seed(cfg.get("seed", 1337))
     np.random.seed(cfg.get("seed", 1337))
@@ -39,7 +55,7 @@ def train(cfg, writer, logger):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     arch = cfg.get("model", {}).get("arch")
-    if arch in cfg["network_image_sizes"]:
+    if "network_image_sizes" in cfg and arch in cfg["network_image_sizes"]:
         network_input_size = cfg["network_image_sizes"][arch]
     else:
         raise KeyError(f"architecture '{arch}' not found in cfg['network_image_sizes'] and no default is available")
@@ -255,24 +271,33 @@ def train(cfg, writer, logger):
 
 
 if __name__ == "__main__":
-    fname_config = './configs/rpnet_c_railsem19_seg.yml'
+    # defaults (preserve prior behavior)
+    default_config = './configs/trit_net.yml'
+    default_logdir = './runs'
+
     os.environ['CUDA_LAUNCH_BLOCKING']  = '1'
     os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-    parser = argparse.ArgumentParser(description="config")
-    args   = parser.parse_args()
-    args.config = fname_config
+    parser = argparse.ArgumentParser(description="TRIT-Net trainer")
+    parser.add_argument('-c', '--config', help='path to config yaml', default=default_config)
+    parser.add_argument('-l', '--logdir', help='log directory', default=default_logdir)
+    args = parser.parse_args()
 
     with open(args.config) as fp:
         cfg = yaml.safe_load(fp)
 
     run_id = random.randint(1, 100000)
-    dir_log = './runs/rpnet_c_railsem19_seg/cur_20200725'
+    dir_log = args.logdir
+    os.makedirs(dir_log, exist_ok=True)
 
     writer = SummaryWriter(log_dir=dir_log)
     print("RUNDIR: {}".format(dir_log))
 
-    shutil.copy(args.config, dir_log)
+    try:
+        shutil.copy(args.config, dir_log)
+    except Exception:
+        # copying config is best-effort; don't fail the run if it can't be copied
+        pass
 
     logger = get_logger(dir_log)
     logger.info("Let's begin...")
