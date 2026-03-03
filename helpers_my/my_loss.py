@@ -1,9 +1,18 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Tuple
 
 
-def L1_loss(x_est, x_gt, n_chann, b_sigmoid=False):
+def L1_loss(x_est: torch.Tensor, x_gt: torch.Tensor, n_chann: int, b_sigmoid: bool = False) -> torch.Tensor:
+    """Compute an L1 loss with optional clamping for sigmoid outputs.
+
+    Parameters
+    - x_est: estimated tensor
+    - x_gt: ground-truth tensor
+    - n_chann: number of channels (used to select peak clamp value)
+    - b_sigmoid: if True, clamp `x_est` to avoid exact 0/1 in sigmoid outputs
+    """
     if n_chann == 3:
         peak_val = 1 - 1e-4
     elif n_chann == 1:
@@ -18,7 +27,8 @@ def L1_loss(x_est, x_gt, n_chann, b_sigmoid=False):
     return loss_b
 
 
-def MSE_loss(x_est, x_gt):
+def MSE_loss(x_est: torch.Tensor, x_gt: torch.Tensor) -> torch.Tensor:
+    """Mean-squared error after sigmoid-clamping of estimates."""
     x_est = torch.clamp(torch.sigmoid(x_est), min=1e-4, max=1 - 1e-4)
     loss_a = nn.MSELoss()
     loss_b = loss_a(x_est, x_gt)
@@ -26,11 +36,12 @@ def MSE_loss(x_est, x_gt):
     return loss_b
 
 
-def neg_loss(preds, targets):
+def neg_loss(preds: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+    """Focal-like negative log-likelihood used for centerline supervision."""
     param_gamma = 4
 
     size_preds = preds.size()
-    totnum_pixels = size_preds[0]*size_preds[1]*size_preds[2]*size_preds[3]
+    totnum_pixels = size_preds[0] * size_preds[1] * size_preds[2] * size_preds[3]
 
     pos_inds = targets.ge(0.5).float()          # pos_inds: (bs, 1, h, w)
     neg_inds = 1.0 - pos_inds                   # neg_inds: (bs, 1, h, w)
@@ -51,7 +62,8 @@ def neg_loss(preds, targets):
     return loss / totnum_pixels
 
 
-def neg_loss_cb(preds, targets):
+def neg_loss_cb(preds: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+    """Class-balanced negative log-likelihood variant."""
     param_gamma = 2
 
     size_preds = preds.size()
@@ -63,10 +75,8 @@ def neg_loss_cb(preds, targets):
     num_neg = neg_inds.float().sum()
     totnum_all = num_pos + num_neg
 
-    alpha_pos  = num_neg/totnum_all
-    alpha_neg  = num_pos/totnum_all
-
-
+    alpha_pos = num_neg / totnum_all
+    alpha_neg = num_pos / totnum_all
 
     loss = 0
 
@@ -77,14 +87,15 @@ def neg_loss_cb(preds, targets):
         pos_loss = pos_loss.sum()
         neg_loss = neg_loss.sum()
 
-        loss = loss + (alpha_pos*pos_loss + alpha_neg*neg_loss)
+        loss = loss + (alpha_pos * pos_loss + alpha_neg * neg_loss)
 
-    return loss/totnum_all
+    return loss / totnum_all
 
 
-def _neg_loss_ver0(preds, targets):
-    pos_inds = targets == 1     
-    neg_inds = targets < 1     
+def _neg_loss_ver0(preds: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+    """Legacy neg loss implementation kept for reference."""
+    pos_inds = targets == 1
+    neg_inds = targets < 1
     neg_weights = torch.pow(1 - targets[neg_inds], 4)
     loss = 0
 
