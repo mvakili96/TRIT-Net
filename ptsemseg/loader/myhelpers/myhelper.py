@@ -1,19 +1,31 @@
 import os
-import torch
-import numpy as np
-import collections
-import cv2
-import math
+from typing import Any, Dict, List, Optional, Tuple
+
 import copy
+import math
+
+import cv2
+import numpy as np
+import torch
 from scipy.signal import find_peaks
 import tifffile as tiff
 from torchvision.transforms import ToTensor
 
 
-def read_img_raw_jpg_from_file(full_fname_img_raw_jpg, size_img_rsz, arch, rgb_mean, rgb_std):
+def read_img_raw_jpg_from_file(
+    full_fname_img_raw_jpg: str,
+    size_img_rsz: Dict[str, int],
+    arch: str,
+    rgb_mean: Optional[List[float]],
+    rgb_std: Optional[List[float]],
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Read and resize an RGB image, then normalize to model input.
+
+    Returns the uint8 resized image and the normalized float tensor (C,H,W).
+    """
 
     img_raw = cv2.imread(full_fname_img_raw_jpg)
-    
+
     if img_raw is None or img_raw.size == 0:
         fsz = os.path.getsize(full_fname_img_raw_jpg)
         raise RuntimeError(
@@ -21,35 +33,47 @@ def read_img_raw_jpg_from_file(full_fname_img_raw_jpg, size_img_rsz, arch, rgb_m
             f"(cv2.imread returned None/empty, size_on_disk={fsz} bytes)"
         )
 
-    img_raw_rsz_uint8      = cv2.resize(img_raw, (size_img_rsz['w'], size_img_rsz['h']))
-    img_raw_rsz_fl_n_final = convert_img_ori_to_img_data(img_raw_rsz_uint8, arch, rgb_mean=rgb_mean, rgb_std=rgb_std)
+    img_raw_rsz_uint8 = cv2.resize(img_raw, (size_img_rsz["w"], size_img_rsz["h"]))
+    img_raw_rsz_fl_n_final = convert_img_ori_to_img_data(
+        img_raw_rsz_uint8, arch, rgb_mean=rgb_mean, rgb_std=rgb_std
+    )
 
     return img_raw_rsz_uint8, img_raw_rsz_fl_n_final
 
 
-def convert_img_ori_to_img_data(img_ori_uint8,
-                                arch,
-                                rgb_mean=None,
-                                rgb_std=None):
+def convert_img_ori_to_img_data(
+    img_ori_uint8: np.ndarray,
+    arch: str,
+    rgb_mean: Optional[List[float]] = None,
+    rgb_std: Optional[List[float]] = None,
+) -> np.ndarray:
+    """Convert an original uint8 image to the model input float array.
 
-    if arch == "rpnet_c" or arch == "bisenet_v2" or arch == "segformer" or arch == "seghardnet":
+    Behavior is branch-dependent on `arch` to preserve legacy preprocessing.
+    """
+
+    if arch in ("rpnet_c", "bisenet_v2", "segformer", "seghardnet"):
         img_ori_fl = img_ori_uint8.astype(np.float32) / 255.0
         img_ori_fl_n = img_ori_fl - rgb_mean
         img_ori_fl_n = img_ori_fl_n / rgb_std
         img_ori_fl_n = img_ori_fl_n.transpose(2, 0, 1)
         img_data_fl_n_final = img_ori_fl_n.astype(np.float32)
     elif arch == "dlinknet_34":
-        img_data_fl_n_final = np.array(img_ori_uint8, np.float32).transpose(2, 0, 1) / 255.0 * 3.2 - 1.6
+        img_data_fl_n_final = (
+            np.array(img_ori_uint8, np.float32).transpose(2, 0, 1) / 255.0 * 3.2 - 1.6
+        )
     elif arch == "erfnet":
         img_data_fl_n_final = ToTensor()(img_ori_uint8)
         img_data_fl_n_final = img_data_fl_n_final.numpy()
     else:
-        raise ("No model found for converting image to data")
+        raise RuntimeError("No model found for converting image to data")
 
     return img_data_fl_n_final
 
 
-def read_label_seg_png_from_file(full_fname_label_seg_png, size_out):
+def read_label_seg_png_from_file(full_fname_label_seg_png: str, size_out: Dict[str, int]) -> np.ndarray:
+    """Read a segmentation PNG as a 2D array and resize if necessary."""
+
     img_raw = cv2.imread(full_fname_label_seg_png, cv2.IMREAD_GRAYSCALE)
 
     if img_raw is None:
@@ -57,29 +81,27 @@ def read_label_seg_png_from_file(full_fname_label_seg_png, size_out):
 
     h, w = img_raw.shape
 
-    if w != size_out['w'] or h != size_out['h']:
+    if w != size_out["w"] or h != size_out["h"]:
         img_raw = cv2.resize(
-            img_raw,
-            (size_out['w'], size_out['h']), 
-            interpolation=cv2.INTER_NEAREST
+            img_raw, (size_out["w"], size_out["h"]), interpolation=cv2.INTER_NEAREST
         )
 
     return img_raw
 
 
-def read_triplet_image_from_file(full_fname_triplet_image_png,size_out):
-    img_raw = cv2.imread(full_fname_triplet_image_png,cv2.IMREAD_GRAYSCALE)
+def read_triplet_image_from_file(full_fname_triplet_image_png: str, size_out: Dict[str, int]) -> np.ndarray:
+    """Read a single-channel triplet image (centerline / AFM) and return shape (1,H,W)."""
+
+    img_raw = cv2.imread(full_fname_triplet_image_png, cv2.IMREAD_GRAYSCALE)
 
     if img_raw is None:
         raise FileNotFoundError(f"Could not read {full_fname_triplet_image_png}")
 
     h, w = img_raw.shape
 
-    if w != size_out['w'] or h != size_out['h']:
+    if w != size_out["w"] or h != size_out["h"]:
         img_raw = cv2.resize(
-            img_raw,
-            (size_out['w'], size_out['h']), 
-            interpolation=cv2.INTER_NEAREST
+            img_raw, (size_out["w"], size_out["h"]), interpolation=cv2.INTER_NEAREST
         )
 
     img_reshaped = np.array([img_raw])
@@ -87,25 +109,28 @@ def read_triplet_image_from_file(full_fname_triplet_image_png,size_out):
     return img_reshaped
 
 
-def read_fnames_trainval(dir_this, idx_split):
+def read_fnames_trainval(dir_this: str, idx_split: int) -> Dict[str, List[str]]:
+    """List files in `dir_this` and split into train/val by `idx_split`.
+
+    Returns a dict with keys `train` and `val` containing filenames.
+    """
+
     list_fname_ = os.listdir(dir_this)
     list_fname_ = [
         f for f in list_fname_
         if f != "@eaDir"                                  
         and not os.path.isdir(os.path.join(dir_this, f))  
     ]
-    list_fname  = sorted(list_fname_)
-    list_fname_train = list_fname[0:idx_split] 
-    list_fname_val   = list_fname[idx_split:]
+    list_fname = sorted(list_fname_)
+    list_fname_train = list_fname[0:idx_split]
+    list_fname_val = list_fname[idx_split:]
 
-    dict_fnames = collections.defaultdict(list)
-    dict_fnames["train"] = list_fname_train
-    dict_fnames["val"]   = list_fname_val
+    dict_fnames: Dict[str, List[str]] = {"train": list_fname_train, "val": list_fname_val}
 
     return dict_fnames
 
 
-def decode_segmap(labelmap, plot=False):
+def decode_segmap(labelmap: np.ndarray, plot: bool = False) -> np.ndarray:
     n_classes = 19
 
     rgb_class00 = [128,  64, 128]   # 00: road
@@ -171,11 +196,17 @@ def decode_segmap(labelmap, plot=False):
     return img_label_rgb
 
 
-def decode_output_centerline(res_in):
+def decode_output_centerline(res_in: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
+    """Decode model centerline output to (float array, uint8 image).
+
+    Returns (res_out, img_res_out) where `res_out` is float numpy array and
+    `img_res_out` is uint8 visualization.
+    """
+
     res_sigmoid = torch.clamp(torch.sigmoid(res_in), min=1e-4, max=1 - 1e-4)
 
-    res_a = res_sigmoid[0].permute(1, 2, 0)    
-    res_b = res_a[:, :, 0]                     
+    res_a = res_sigmoid[0].permute(1, 2, 0)
+    res_b = res_a[:, :, 0]
     res_c = res_b * 255.0
     res_d = torch.clamp(res_c, min=0.0, max=255.0)
     res_e = res_d.detach().cpu().numpy()
@@ -186,19 +217,24 @@ def decode_output_centerline(res_in):
     return res_out, img_res_out
 
 
-def decode_output_leftright(res_in):
+def decode_output_leftright(res_in: torch.Tensor) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Decode left/right outputs into numpy arrays and uint8 images.
+
+    Returns (res_left, res_right, img_res_left, img_res_right).
+    """
+
     res_relu = torch.relu(res_in)
-    res0     = res_relu[0]                                          
+    res0 = res_relu[0]
 
-    res_left_a      = res0[0, :, :]                                 
-    res_left_b      = torch.clamp(res_left_a, min=0.0, max=255.0)
-    res_left_c      = res_left_b.detach().cpu().numpy()
-    img_res_left    = res_left_c.astype(np.uint8)
+    res_left_a = res0[0, :, :]
+    res_left_b = torch.clamp(res_left_a, min=0.0, max=255.0)
+    res_left_c = res_left_b.detach().cpu().numpy()
+    img_res_left = res_left_c.astype(np.uint8)
 
-    res_right_a     = res0[1, :, :]                                 
-    res_right_b     = torch.clamp(res_right_a, min=0.0, max=255.0)
-    res_right_c     = res_right_b.detach().cpu().numpy()
-    img_res_right   = res_right_c.astype(np.uint8)
+    res_right_a = res0[1, :, :]
+    res_right_b = torch.clamp(res_right_a, min=0.0, max=255.0)
+    res_right_c = res_right_b.detach().cpu().numpy()
+    img_res_right = res_right_c.astype(np.uint8)
 
     res_left = res_left_c
     res_right = res_right_c
@@ -206,17 +242,22 @@ def decode_output_leftright(res_in):
     return res_left, res_right, img_res_left, img_res_right
 
 
-def compute_centerness_from_leftright(res_left, res_right):
-    res_delta = abs(res_left - res_right)
-    res_sum   = abs(res_left) + abs(res_right)
+def compute_centerness_from_leftright(res_left: np.ndarray, res_right: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Compute centerness weight from left/right predictions.
 
-    res_ratio = res_delta/res_sum          
+    Returns (res_weight (float array), img_res_weight (uint8 visualization)).
+    """
+
+    res_delta = abs(res_left - res_right)
+    res_sum = abs(res_left) + abs(res_right)
+
+    res_ratio = res_delta / res_sum
     res_ratio[np.isnan(res_ratio)] = 1.0
     res_ratio[res_sum <= 1.0] = 1.0
 
     res_weight = 1.0 - res_ratio
 
-    res_weight_b   = res_weight*255.0
+    res_weight_b = res_weight * 255.0
     img_res_weight = res_weight_b.astype(np.uint8)
 
     return res_weight, img_res_weight

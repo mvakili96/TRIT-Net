@@ -9,7 +9,7 @@ import torch
 from torch.utils import data
 
 from ptsemseg.augmentations import Compose, RandomHorizontallyFlip, RandomRotate
-from ptsemseg.loader.myhelpers import myhelper_railsem19_b
+from ptsemseg.loader.myhelpers import myhelper
 
 class Triplet_Loader(data.Dataset):
     """Dataset loader for RailSem19 segmentation triplet data.
@@ -54,10 +54,10 @@ class Triplet_Loader(data.Dataset):
         elif self.n_classes == 4:
             self.dir_label_seg_png = self.root_dataset + 'Seg4/'
 
-        self.fnames_img_raw_jpg = myhelper_railsem19_b.read_fnames_trainval(self.dir_img_raw_jpg, self.train_split)
-        self.fnames_label_seg_png = myhelper_railsem19_b.read_fnames_trainval(self.dir_label_seg_png, self.train_split)
-        self.fnames_triplet_image = myhelper_railsem19_b.read_fnames_trainval(self.dir_triplet_image, self.train_split)
-        self.fnames_AFM = myhelper_railsem19_b.read_fnames_trainval(self.dir_img_AFM, self.train_split)
+        self.fnames_img_raw_jpg = myhelper.read_fnames_trainval(self.dir_img_raw_jpg, self.train_split)
+        self.fnames_label_seg_png = myhelper.read_fnames_trainval(self.dir_label_seg_png, self.train_split)
+        self.fnames_triplet_image = myhelper.read_fnames_trainval(self.dir_triplet_image, self.train_split)
+        self.fnames_AFM = myhelper.read_fnames_trainval(self.dir_img_AFM, self.train_split)
 
 
     def __len__(self) -> int:
@@ -77,18 +77,18 @@ class Triplet_Loader(data.Dataset):
         full_fname_triplet_image  = self.dir_triplet_image  + self.fnames_triplet_image[self.type_trainval][index]
 
         img_raw_rsz_uint8, \
-        img_raw_rsz_fl_n = myhelper_railsem19_b.read_img_raw_jpg_from_file(full_fname_img_raw_jpg,
+        img_raw_rsz_fl_n = myhelper.read_img_raw_jpg_from_file(full_fname_img_raw_jpg,
                                                                            self.size_img_rsz,
                                                                            self.arch_this,
                                                                            self.rgb_mean,
                                                                            self.rgb_std)
 
-        img_label_seg_rsz_uint8 = myhelper_railsem19_b.read_label_seg_png_from_file(full_fnames_label_seg_png,
+        img_label_seg_rsz_uint8 = myhelper.read_label_seg_png_from_file(full_fnames_label_seg_png,
                                                                                     self.size_out)
 
-        labelmap_centerline = myhelper_railsem19_b.read_triplet_image_from_file(full_fname_triplet_image,self.size_out)
+        labelmap_centerline = myhelper.read_triplet_image_from_file(full_fname_triplet_image,self.size_out)
 
-        AFM  = myhelper_railsem19_b.read_triplet_image_from_file(full_fnames_img_AFM, self.size_out)
+        AFM  = myhelper.read_triplet_image_from_file(full_fnames_img_AFM, self.size_out)
 
         set_idx_invalid = (img_label_seg_rsz_uint8 > 18)
         img_label_seg_rsz_uint8[set_idx_invalid] = 250

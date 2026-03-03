@@ -1,5 +1,5 @@
 model:
-    arch: bisenet_v2
+    arch: seghardnet
 weight_init_t:
     rpnet_c: ./runs/hardnet/cur/Mybest_63000.pkl
     dlinknet_34: ./runs/hardnet/cur/Mybest_dlink.pkl   # used to be 19600 for original railsem
@@ -17,10 +17,10 @@ network_image_sizes:
     seghardnet: {h: 544, w: 960}
     mask2former: {h: 544, w: 960}
 data:
-    root: ./data/RailSem19/
+    root: ./data/RailDB/
     rgb_mean: [113.95, 118.05, 110.18]
     rgb_std:  [78.37, 68.79, 65.80] 
-    train_split: 6200
+    train_split: 6000
 training:
     num_seg_classes: 4                        
     train_iters: 90000
