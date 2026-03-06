@@ -43,7 +43,7 @@ training:
         loss_th: 0.3
         size_average: True
     lr_schedule: 
-        name: poly_lr
+        name: poly_lr  
         max_iter: 90000
     resume: None
     finetune: None

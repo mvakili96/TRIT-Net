@@ -63,6 +63,11 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
     data_loader   = get_loader()
 
     n_classes_segmentation = cfg["training"]["num_seg_classes"]
+    if n_classes_segmentation not in (3, 4):
+        raise ValueError(
+            f"Invalid configuration: training.num_seg_classes={n_classes_segmentation}. "
+            "Expected 3 or 4 segmentation classes."
+        )
 
     t_loader_head = data_loader(configs=cfg, type_trainval="train", network_input_size=network_input_size)
     v_loader_head = data_loader(configs=cfg, type_trainval="val", network_input_size=network_input_size)
