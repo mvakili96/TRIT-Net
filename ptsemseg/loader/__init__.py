@@ -8,7 +8,7 @@ def get_loader() -> Type[Triplet_Loader]:
 
     Returns the Dataset class (not an instance). The trainer calls it like:
         data_loader = get_loader()
-        t_loader_head = data_loader(configs=cfg, type_trainval='train', network_input_size=...)
+        t_loader_head = data_loader(configs=cfg, split='train', network_input_size=...)
 
     """
 

@@ -109,10 +109,11 @@ def read_triplet_image_from_file(full_fname_triplet_image_png: str, size_out: Di
     return img_reshaped
 
 
-def read_fnames_trainval(dir_this: str, idx_split: int) -> Dict[str, List[str]]:
-    """List files in `dir_this` and split into train/val by `idx_split`.
+def read_fnames_train(dir_this: str, max_train_index: int) -> List[str]:
+    """List files in `dir_this` and keep training files up to `max_train_index`.
 
-    Returns a dict with keys `train` and `val` containing filenames.
+    `max_train_index` follows Python slicing semantics: a value of 6000 keeps
+    sorted filenames at indexes 0 through 5999.
     """
 
     list_fname_ = os.listdir(dir_this)
@@ -122,12 +123,8 @@ def read_fnames_trainval(dir_this: str, idx_split: int) -> Dict[str, List[str]]:
         and not os.path.isdir(os.path.join(dir_this, f))  
     ]
     list_fname = sorted(list_fname_)
-    list_fname_train = list_fname[0:idx_split]
-    list_fname_val = list_fname[idx_split:]
 
-    dict_fnames: Dict[str, List[str]] = {"train": list_fname_train, "val": list_fname_val}
-
-    return dict_fnames
+    return list_fname[0:max_train_index]
 
 
 def decode_segmap(labelmap: np.ndarray, plot: bool = False) -> np.ndarray:

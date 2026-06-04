@@ -17,15 +17,15 @@ network_image_sizes:
     seghardnet: {h: 544, w: 960}
     mask2former: {h: 544, w: 960}
 data:
-    root: ./data/RailDB/
+    root: ./data/RailSem19/
     rgb_mean: [113.95, 118.05, 110.18]
     rgb_std:  [78.37, 68.79, 65.80] 
-    train_split: 6000
+    train_split: 7317
 training:
     num_seg_classes: 4                        
     train_iters: 90000
     batch_size: 4
-    val_interval: 10000
+    checkpoint_interval: 1000
     n_workers: 0
     print_interval: 100
     optimizer:

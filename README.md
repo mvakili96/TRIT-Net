@@ -44,7 +44,9 @@ Important sections:
 
 - `model.arch` — model architecture string (must match supported models)
 - `network_image_sizes` — per-architecture input sizes (height `h`, width `w`)
+- `data.train_split` — highest sorted file index used for training; for example, `6000` uses indexes `0..5999`
 - `training.num_seg_classes` — must be `3` or `4` (trainer enforces this)
+- `training.checkpoint_interval` — training-only checkpoint save interval
 - `training.optimizer` — optimizer selection and hyperparams
 - `training.lr_schedule` — scheduler selection and params
 

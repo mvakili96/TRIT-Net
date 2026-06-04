@@ -23,16 +23,19 @@ class Triplet_Loader(data.Dataset):
 
     Args:
         configs: configuration dictionary (see configs/*.yml)
-        type_trainval: 'train' or 'val' split selector
+        split: currently only 'train' is supported
         network_input_size: dict with keys 'h' and 'w' for resized image shape
     """
 
     def __init__(self,
                  configs: Dict[str, Any],
-                 type_trainval: str = "train",
+                 split: str = "train",
                  network_input_size: Optional[Dict[str, int]] = None) -> None:
 
-        self.type_trainval = type_trainval
+        if split != "train":
+            raise ValueError("Triplet_Loader only supports split='train'.")
+
+        self.split = split
 
         self.n_classes = configs["training"]["num_seg_classes"]
         self.root_dataset = configs["data"]["root"]
@@ -54,16 +57,16 @@ class Triplet_Loader(data.Dataset):
         elif self.n_classes == 4:
             self.dir_label_seg_png = self.root_dataset + 'Seg4/'
 
-        self.fnames_img_raw_jpg = myhelper.read_fnames_trainval(self.dir_img_raw_jpg, self.train_split)
-        self.fnames_label_seg_png = myhelper.read_fnames_trainval(self.dir_label_seg_png, self.train_split)
-        self.fnames_triplet_image = myhelper.read_fnames_trainval(self.dir_triplet_image, self.train_split)
-        self.fnames_AFM = myhelper.read_fnames_trainval(self.dir_img_AFM, self.train_split)
+        self.fnames_img_raw_jpg = myhelper.read_fnames_train(self.dir_img_raw_jpg, self.train_split)
+        self.fnames_label_seg_png = myhelper.read_fnames_train(self.dir_label_seg_png, self.train_split)
+        self.fnames_triplet_image = myhelper.read_fnames_train(self.dir_triplet_image, self.train_split)
+        self.fnames_AFM = myhelper.read_fnames_train(self.dir_img_AFM, self.train_split)
 
 
     def __len__(self) -> int:
         """Return number of items in the selected split."""
 
-        return len(self.fnames_img_raw_jpg[self.type_trainval])
+        return len(self.fnames_img_raw_jpg)
 
 
     def __getitem__(self, index: int) -> Dict[str, torch.Tensor]:
@@ -71,10 +74,10 @@ class Triplet_Loader(data.Dataset):
 
         The returned dict keys follow the contract used by the trainer.
         """
-        full_fname_img_raw_jpg    = self.dir_img_raw_jpg    + self.fnames_img_raw_jpg[self.type_trainval][index]
-        full_fnames_label_seg_png = self.dir_label_seg_png  + self.fnames_label_seg_png[self.type_trainval][index]
-        full_fnames_img_AFM       = self.dir_img_AFM        + self.fnames_AFM[self.type_trainval][index]
-        full_fname_triplet_image  = self.dir_triplet_image  + self.fnames_triplet_image[self.type_trainval][index]
+        full_fname_img_raw_jpg    = self.dir_img_raw_jpg    + self.fnames_img_raw_jpg[index]
+        full_fnames_label_seg_png = self.dir_label_seg_png  + self.fnames_label_seg_png[index]
+        full_fnames_img_AFM       = self.dir_img_AFM        + self.fnames_AFM[index]
+        full_fname_triplet_image  = self.dir_triplet_image  + self.fnames_triplet_image[index]
 
         img_raw_rsz_uint8, \
         img_raw_rsz_fl_n = myhelper.read_img_raw_jpg_from_file(full_fname_img_raw_jpg,

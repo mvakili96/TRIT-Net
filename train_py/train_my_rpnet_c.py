@@ -69,8 +69,7 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
             "Expected 3 or 4 segmentation classes."
         )
 
-    t_loader_head = data_loader(configs=cfg, type_trainval="train", network_input_size=network_input_size)
-    v_loader_head = data_loader(configs=cfg, type_trainval="val", network_input_size=network_input_size)
+    t_loader_head = data_loader(configs=cfg, split="train", network_input_size=network_input_size)
 
     t_loader_batch = data.DataLoader(
         t_loader_head,
@@ -78,13 +77,6 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
         num_workers=cfg["training"]["n_workers"],
         shuffle=True,
         )
-
-    v_loader_batch = data.DataLoader(
-        v_loader_head,
-        batch_size=cfg["training"]["batch_size"],
-        num_workers=cfg["training"]["n_workers"]
-        )
-
 
     model = get_model(cfg["model"], n_classes_segmentation).to(device)
 
@@ -112,8 +104,8 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
 
     time_meter = averageMeter()
 
-    best_iou = -100.0
     best_loss_hmap = 1000000000.0
+    checkpoint_interval = cfg["training"].get("checkpoint_interval", cfg["training"]["train_iters"])
     i = start_iter
     flag = True
 
@@ -208,60 +200,7 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
                 writer.add_scalar("loss/train_loss", loss_this.item(), i + 1)
                 time_meter.reset()
 
-            if (i + 1) % cfg["training"]["val_interval"] == 0 or (i + 1) == cfg["training"]["train_iters"]:
-                loss_accum_seg_validation = 0
-                loss_accum_centerline_validation = 0
-                loss_accum_AFM_validation = 0
-                num_loss_validation = 0
-                for data_batch_validation in v_loader_batch:
-                    imgs_raw_fl_n_val                        = data_batch_validation['img_raw_fl_n']                     
-                    gt_imgs_label_seg_val                    = data_batch_validation['gt_img_label_seg']               
-                    gt_labelmap_centerline_val               = data_batch_validation['gt_labelmap_centerline']          
-                    gt_AFM_val                               = data_batch_validation['gt_AFM']                           
-
-                    imgs_raw_fl_n_val          = imgs_raw_fl_n_val.to(device)
-                    gt_imgs_label_seg_val      = gt_imgs_label_seg_val.to(device)
-                    gt_labelmap_centerline_val = gt_labelmap_centerline_val.to(device)
-                    gt_AFM_val                 = gt_AFM_val.to(device)
-
-                    if cfg["model"]["arch"] != "bisenet_v2":
-                        if n_classes_segmentation == 4:
-                            outs_seg, outs_centerline, outs_AFM =  model(imgs_raw_fl_n_val)
-                        elif n_classes_segmentation == 3:
-                            outs_seg, outs_centerline           =  model(imgs_raw_fl_n_val)
-                    
-                    else:
-                        if n_classes_segmentation == 4:
-                            outs_seg, outs_centerline, outs_AFM, aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n_val)
-                        elif n_classes_segmentation == 3:
-                            outs_seg, outs_centerline , aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n_val)
-
-                    loss_seg_val        = loss_fn(input=outs_seg, target=gt_imgs_label_seg_val, dev = device)
-                    loss_centerline_val = my_loss.L1_loss(x_est=outs_centerline, x_gt=gt_labelmap_centerline_val, n_chann = 1, b_sigmoid=True)
-
-                    if n_classes_segmentation == 4:
-                        loss_AFM_val        = my_loss.L1_loss(x_est=outs_AFM, x_gt=gt_AFM_val, n_chann=1,b_sigmoid=True)
-                        loss_accum_AFM_validation        += loss_AFM_val.item()
-
-
-                    loss_accum_seg_validation        += loss_seg_val.item()
-                    loss_accum_centerline_validation += loss_centerline_val.item()
-                    
-                    num_loss_validation += 1
-
-                fmt_str = "(VALIDATION) Iter [{:d}/{:d}], Loss (seg): {:.7f}, Loss (centerline): {:.7f}, Loss (AFM): {:.7f}"
-
-                print_str = fmt_str.format(
-                    i + 1,
-                    cfg["training"]["train_iters"],
-                    loss_accum_seg_validation / num_loss_validation,
-                    loss_accum_centerline_validation / num_loss_validation,
-                    loss_accum_AFM_validation / num_loss_validation,
-                )
-
-                print(print_str)
-
-
+            if (i + 1) % checkpoint_interval == 0 or (i + 1) == cfg["training"]["train_iters"]:
                 state = {"epoch": i + 1,
                          "model_state": model.state_dict(),
                          "best_loss": best_loss_hmap}
@@ -269,6 +208,7 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
                 save_path = 'Mybest_' + str(i+1) + '.pkl'
 
                 torch.save(state, save_path)
+                logger.info("Saved checkpoint {}".format(save_path))
 
             if (i + 1) == cfg["training"]["train_iters"]:
                 flag = False

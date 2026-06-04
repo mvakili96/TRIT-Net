@@ -15,3 +15,5 @@ train_py/*
 !train_py/*.py
 
 .github/
+
+repo_cleanup_plan.md
