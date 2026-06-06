@@ -11,6 +11,13 @@ from scipy.signal import find_peaks
 import tifffile as tiff
 from torchvision.transforms import ToTensor
 
+from ptsemseg.loader.constants import IGNORE_LABEL
+from ptsemseg.loader.constants import RAILSEM19_NUM_CLASSES
+from ptsemseg.loader.constants import RAILSEM19_RGB_LABELS
+from ptsemseg.models.registry import DLINKNET_PREPROCESS_MODELS
+from ptsemseg.models.registry import RGB_MEAN_STD_PREPROCESS_MODELS
+from ptsemseg.models.registry import TO_TENSOR_PREPROCESS_MODELS
+
 
 def read_img_raw_jpg_from_file(
     full_fname_img_raw_jpg: str,
@@ -52,17 +59,17 @@ def convert_img_ori_to_img_data(
     Behavior is branch-dependent on `arch` to preserve legacy preprocessing.
     """
 
-    if arch in ("rpnet_c", "bisenet_v2", "segformer", "seghardnet"):
+    if arch in RGB_MEAN_STD_PREPROCESS_MODELS:
         img_ori_fl = img_ori_uint8.astype(np.float32) / 255.0
         img_ori_fl_n = img_ori_fl - rgb_mean
         img_ori_fl_n = img_ori_fl_n / rgb_std
         img_ori_fl_n = img_ori_fl_n.transpose(2, 0, 1)
         img_data_fl_n_final = img_ori_fl_n.astype(np.float32)
-    elif arch == "dlinknet_34":
+    elif arch in DLINKNET_PREPROCESS_MODELS:
         img_data_fl_n_final = (
             np.array(img_ori_uint8, np.float32).transpose(2, 0, 1) / 255.0 * 3.2 - 1.6
         )
-    elif arch == "erfnet":
+    elif arch in TO_TENSOR_PREPROCESS_MODELS:
         img_data_fl_n_final = ToTensor()(img_ori_uint8)
         img_data_fl_n_final = img_data_fl_n_final.numpy()
     else:
@@ -128,57 +135,13 @@ def read_fnames_train(dir_this: str, max_train_index: int) -> List[str]:
 
 
 def decode_segmap(labelmap: np.ndarray, plot: bool = False) -> np.ndarray:
-    n_classes = 19
+    rgb_labels = np.array(RAILSEM19_RGB_LABELS)
 
-    rgb_class00 = [128,  64, 128]   # 00: road
-    rgb_class01 = [244,  35, 232]   # 01: sidewalk
-    rgb_class02 = [ 70,  70,  70]   # 02: construction
-    rgb_class03 = [192,   0, 128]   # 03: tram-track
-    rgb_class04 = [190, 153, 153]   # 04: fence
-    rgb_class05 = [153, 153, 153]   # 05: pole
-    rgb_class06 = [250, 170,  30]   # 06: traffic-light
-    rgb_class07 = [220, 220,   0]   # 07: traffic-sign
-    rgb_class08 = [107, 142,  35]   # 08: vegetation
-    rgb_class09 = [152, 251, 152]   # 09: terrain
-    rgb_class10 = [ 70, 130, 180]   # 10: sky
-    rgb_class11 = [220,  20,  60]   # 11: human
-    rgb_class12 = [230, 150, 140]   # 12: rail-track
-    rgb_class13 = [  0,   0, 142]   # 13: car
-    rgb_class14 = [  0,   0,  70]   # 14: truck
-    rgb_class15 = [ 90,  40,  40]   # 15: trackbed
-    rgb_class16 = [  0,  80, 100]   # 16: on-rails
-    rgb_class17 = [  0, 254, 254]   # 17: rail-raised
-    rgb_class18 = [  0,  68,  63]   # 18: rail-embedded
+    r = np.ones_like(labelmap ) * IGNORE_LABEL
+    g = np.ones_like(labelmap ) * IGNORE_LABEL
+    b = np.ones_like(labelmap ) * IGNORE_LABEL
 
-    rgb_labels = np.array(
-        [
-            rgb_class00,
-            rgb_class01,
-            rgb_class02,
-            rgb_class03,
-            rgb_class04,
-            rgb_class05,
-            rgb_class06,
-            rgb_class07,
-            rgb_class08,
-            rgb_class09,
-            rgb_class10,
-            rgb_class11,
-            rgb_class12,
-            rgb_class13,
-            rgb_class14,
-            rgb_class15,
-            rgb_class16,
-            rgb_class17,
-            rgb_class18,
-        ]
-    )
-
-    r = np.ones_like(labelmap )*250         
-    g = np.ones_like(labelmap )*250
-    b = np.ones_like(labelmap )*250
-
-    for l in range(0, n_classes):
+    for l in range(0, RAILSEM19_NUM_CLASSES):
         idx_set = (labelmap == l)           
 
         r[idx_set] = rgb_labels[l, 0]       

@@ -25,9 +25,13 @@ from tensorboardX               import SummaryWriter
 from ptsemseg.models            import get_model
 from ptsemseg.loss              import get_loss_function     # Segmentation Loss
 from ptsemseg.loader            import get_loader
+from ptsemseg.loader.constants  import TRAIN_SPLIT_NAME
+from ptsemseg.loader.constants  import VALID_NUM_SEG_CLASSES
 from ptsemseg.utils             import get_logger
 from ptsemseg.metrics           import averageMeter
 from ptsemseg.augmentations     import get_composed_augmentations
+from ptsemseg.models.registry   import AUX_OUTPUT_MODELS
+from ptsemseg.models.registry   import CUSTOM_WEIGHT_INIT_MODELS
 from ptsemseg.schedulers        import get_scheduler
 from ptsemseg.optimizers        import get_optimizer
 from helpers_my                 import my_utils
@@ -63,13 +67,13 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
     data_loader   = get_loader()
 
     n_classes_segmentation = cfg["training"]["num_seg_classes"]
-    if n_classes_segmentation not in (3, 4):
+    if n_classes_segmentation not in VALID_NUM_SEG_CLASSES:
         raise ValueError(
             f"Invalid configuration: training.num_seg_classes={n_classes_segmentation}. "
-            "Expected 3 or 4 segmentation classes."
+            f"Expected one of {VALID_NUM_SEG_CLASSES}."
         )
 
-    t_loader_head = data_loader(configs=cfg, split="train", network_input_size=network_input_size)
+    t_loader_head = data_loader(configs=cfg, split=TRAIN_SPLIT_NAME, network_input_size=network_input_size)
 
     t_loader_batch = data.DataLoader(
         t_loader_head,
@@ -80,7 +84,7 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
 
     model = get_model(cfg["model"], n_classes_segmentation).to(device)
 
-    if cfg["model"]["arch"] == "rpnet_c":
+    if cfg["model"]["arch"] in CUSTOM_WEIGHT_INIT_MODELS:
         model.apply(my_utils.weights_init)
 
     fname_weight_init = cfg["weight_init_t"][cfg["model"]["arch"]]
@@ -136,7 +140,7 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
             model.train()
             optimizer.zero_grad()
 
-            if cfg["model"]["arch"] != "bisenet_v2":
+            if cfg["model"]["arch"] not in AUX_OUTPUT_MODELS:
                 if n_classes_segmentation == 4:
                     outputs_seg, outputs_centerline, outputs_AFM = model(imgs_raw_fl_n)
                 elif n_classes_segmentation == 3:
@@ -148,7 +152,7 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
                 elif n_classes_segmentation == 3:
                     outputs_seg, outputs_centerline, aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n)
 
-            if cfg["model"]["arch"] != "bisenet_v2":
+            if cfg["model"]["arch"] not in AUX_OUTPUT_MODELS:
                 loss_seg = loss_fn(input=outputs_seg, target=gt_imgs_label_seg, dev = device)
             else:
                 loss_seg_unique = loss_fn(input=outputs_seg, target=gt_imgs_label_seg, dev=device)

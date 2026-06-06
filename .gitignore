@@ -1,8 +1,11 @@
+# Python/cache artifacts
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.ruff_cache/
 
+# Local dependencies, external repos, and generated training artifacts
 weights/
 runs/
 Optimized_Design/
@@ -10,10 +13,11 @@ Network_Design_Optimization/
 Mask2Former/
 detectron2/
 data/
+docs/
+.github/
 
+# Keep training scripts tracked, but ignore generated files under train_py/.
 train_py/*
 !train_py/*.py
-
-.github/
 
 repo_cleanup_plan.md

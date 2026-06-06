@@ -9,6 +9,14 @@ import torch
 from torch.utils import data
 
 from ptsemseg.augmentations import Compose, RandomHorizontallyFlip, RandomRotate
+from ptsemseg.loader.constants import DIR_AFM
+from ptsemseg.loader.constants import DIR_CENTERLINE
+from ptsemseg.loader.constants import DIR_IMAGES
+from ptsemseg.loader.constants import IGNORE_LABEL
+from ptsemseg.loader.constants import MAX_VALID_SEG_LABEL
+from ptsemseg.loader.constants import SEG_LABEL_DIR_BY_NUM_CLASSES
+from ptsemseg.loader.constants import TRAIN_SPLIT_NAME
+from ptsemseg.loader.constants import VALID_NUM_SEG_CLASSES
 from ptsemseg.loader.myhelpers import myhelper
 
 class Triplet_Loader(data.Dataset):
@@ -32,8 +40,8 @@ class Triplet_Loader(data.Dataset):
                  split: str = "train",
                  network_input_size: Optional[Dict[str, int]] = None) -> None:
 
-        if split != "train":
-            raise ValueError("Triplet_Loader only supports split='train'.")
+        if split != TRAIN_SPLIT_NAME:
+            raise ValueError(f"Triplet_Loader only supports split='{TRAIN_SPLIT_NAME}'.")
 
         self.split = split
 
@@ -49,13 +57,16 @@ class Triplet_Loader(data.Dataset):
         rgb_std = configs["data"]["rgb_std"]
         self.rgb_std = np.array(rgb_std) / 255.0
 
-        self.dir_img_raw_jpg = self.root_dataset + 'jpgs/'
-        self.dir_img_AFM = self.root_dataset + 'AFM/'
-        self.dir_triplet_image = self.root_dataset + 'C_image/'
-        if self.n_classes == 3:
-            self.dir_label_seg_png = self.root_dataset + 'Seg3/'
-        elif self.n_classes == 4:
-            self.dir_label_seg_png = self.root_dataset + 'Seg4/'
+        if self.n_classes not in VALID_NUM_SEG_CLASSES:
+            raise ValueError(
+                f"Invalid configuration: training.num_seg_classes={self.n_classes}. "
+                f"Expected one of {VALID_NUM_SEG_CLASSES}."
+            )
+
+        self.dir_img_raw_jpg = self.root_dataset + DIR_IMAGES
+        self.dir_img_AFM = self.root_dataset + DIR_AFM
+        self.dir_triplet_image = self.root_dataset + DIR_CENTERLINE
+        self.dir_label_seg_png = self.root_dataset + SEG_LABEL_DIR_BY_NUM_CLASSES[self.n_classes]
 
         self.fnames_img_raw_jpg = myhelper.read_fnames_train(self.dir_img_raw_jpg, self.train_split)
         self.fnames_label_seg_png = myhelper.read_fnames_train(self.dir_label_seg_png, self.train_split)
@@ -93,8 +104,8 @@ class Triplet_Loader(data.Dataset):
 
         AFM  = myhelper.read_triplet_image_from_file(full_fnames_img_AFM, self.size_out)
 
-        set_idx_invalid = (img_label_seg_rsz_uint8 > 18)
-        img_label_seg_rsz_uint8[set_idx_invalid] = 250
+        set_idx_invalid = (img_label_seg_rsz_uint8 > MAX_VALID_SEG_LABEL)
+        img_label_seg_rsz_uint8[set_idx_invalid] = IGNORE_LABEL
 
         output_img_raw             = torch.from_numpy(img_raw_rsz_fl_n).float()
         output_img_label_seg       = torch.from_numpy(img_label_seg_rsz_uint8).long()
