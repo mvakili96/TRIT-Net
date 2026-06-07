@@ -17,7 +17,10 @@ from ptsemseg.loader.constants import MAX_VALID_SEG_LABEL
 from ptsemseg.loader.constants import SEG_LABEL_DIR_BY_NUM_CLASSES
 from ptsemseg.loader.constants import TRAIN_SPLIT_NAME
 from ptsemseg.loader.constants import VALID_NUM_SEG_CLASSES
-from ptsemseg.loader.myhelpers import myhelper
+from ptsemseg.loader.io import read_img_raw_jpg_from_file
+from ptsemseg.loader.io import read_label_seg_png_from_file
+from ptsemseg.loader.io import read_triplet_image_from_file
+from ptsemseg.loader.splits import read_fnames_train
 
 class Triplet_Loader(data.Dataset):
     """Dataset loader for RailSem19 segmentation triplet data.
@@ -68,10 +71,10 @@ class Triplet_Loader(data.Dataset):
         self.dir_triplet_image = self.root_dataset + DIR_CENTERLINE
         self.dir_label_seg_png = self.root_dataset + SEG_LABEL_DIR_BY_NUM_CLASSES[self.n_classes]
 
-        self.fnames_img_raw_jpg = myhelper.read_fnames_train(self.dir_img_raw_jpg, self.train_split)
-        self.fnames_label_seg_png = myhelper.read_fnames_train(self.dir_label_seg_png, self.train_split)
-        self.fnames_triplet_image = myhelper.read_fnames_train(self.dir_triplet_image, self.train_split)
-        self.fnames_AFM = myhelper.read_fnames_train(self.dir_img_AFM, self.train_split)
+        self.fnames_img_raw_jpg = read_fnames_train(self.dir_img_raw_jpg, self.train_split)
+        self.fnames_label_seg_png = read_fnames_train(self.dir_label_seg_png, self.train_split)
+        self.fnames_triplet_image = read_fnames_train(self.dir_triplet_image, self.train_split)
+        self.fnames_AFM = read_fnames_train(self.dir_img_AFM, self.train_split)
 
 
     def __len__(self) -> int:
@@ -91,18 +94,18 @@ class Triplet_Loader(data.Dataset):
         full_fname_triplet_image  = self.dir_triplet_image  + self.fnames_triplet_image[index]
 
         img_raw_rsz_uint8, \
-        img_raw_rsz_fl_n = myhelper.read_img_raw_jpg_from_file(full_fname_img_raw_jpg,
-                                                                           self.size_img_rsz,
-                                                                           self.arch_this,
-                                                                           self.rgb_mean,
-                                                                           self.rgb_std)
+        img_raw_rsz_fl_n = read_img_raw_jpg_from_file(full_fname_img_raw_jpg,
+                                                      self.size_img_rsz,
+                                                      self.arch_this,
+                                                      self.rgb_mean,
+                                                      self.rgb_std)
 
-        img_label_seg_rsz_uint8 = myhelper.read_label_seg_png_from_file(full_fnames_label_seg_png,
-                                                                                    self.size_out)
+        img_label_seg_rsz_uint8 = read_label_seg_png_from_file(full_fnames_label_seg_png,
+                                                               self.size_out)
 
-        labelmap_centerline = myhelper.read_triplet_image_from_file(full_fname_triplet_image,self.size_out)
+        labelmap_centerline = read_triplet_image_from_file(full_fname_triplet_image, self.size_out)
 
-        AFM  = myhelper.read_triplet_image_from_file(full_fnames_img_AFM, self.size_out)
+        AFM = read_triplet_image_from_file(full_fnames_img_AFM, self.size_out)
 
         set_idx_invalid = (img_label_seg_rsz_uint8 > MAX_VALID_SEG_LABEL)
         img_label_seg_rsz_uint8[set_idx_invalid] = IGNORE_LABEL
