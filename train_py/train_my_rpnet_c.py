@@ -1,11 +1,7 @@
 import os
-import yaml
 import time
-import shutil
 import torch
-import random
 import argparse
-import numpy as np
 import torchvision
 import torch.nn as nn
 import sys
@@ -22,20 +18,26 @@ from torch.utils                import data
 from tqdm                       import tqdm
 from tensorboardX               import SummaryWriter
 
-from ptsemseg.models            import get_model
-from ptsemseg.loss              import get_loss_function     # Segmentation Loss
-from ptsemseg.loader            import get_loader
-from ptsemseg.loader.constants  import TRAIN_SPLIT_NAME
-from ptsemseg.loader.constants  import VALID_NUM_SEG_CLASSES
-from ptsemseg.utils             import get_logger
 from ptsemseg.metrics           import averageMeter
 from ptsemseg.augmentations     import get_composed_augmentations
 from ptsemseg.models.registry   import AUX_OUTPUT_MODELS
-from ptsemseg.models.registry   import CUSTOM_WEIGHT_INIT_MODELS
-from ptsemseg.schedulers        import get_scheduler
-from ptsemseg.optimizers        import get_optimizer
-from helpers_my                 import my_utils
 from helpers_my                 import my_loss               # Center/LeftRight Loss
+from ptsemseg.training          import build_loss_function
+from ptsemseg.training          import build_model
+from ptsemseg.training          import build_optimizer
+from ptsemseg.training          import build_scheduler
+from ptsemseg.training          import build_training_dataloader
+from ptsemseg.training          import configure_debug_environment
+from ptsemseg.training          import create_writer_and_logger
+from ptsemseg.training          import get_checkpoint_interval
+from ptsemseg.training          import get_default_config_path
+from ptsemseg.training          import get_default_logdir
+from ptsemseg.training          import get_device
+from ptsemseg.training          import load_config
+from ptsemseg.training          import resolve_network_input_size
+from ptsemseg.training          import save_checkpoint
+from ptsemseg.training          import set_random_seeds
+from ptsemseg.training          import validate_num_segmentation_classes
 
 def train(cfg: dict, writer: SummaryWriter, logger) -> None:
     """Main training loop.
@@ -50,66 +52,28 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
     from `cfg['seed']` when present.
     """
 
-    # deterministic seeds (configurable)
-    torch.manual_seed(cfg.get("seed", 1337))
-    torch.cuda.manual_seed(cfg.get("seed", 1337))
-    np.random.seed(cfg.get("seed", 1337))
-    random.seed(cfg.get("seed", 1337))
+    set_random_seeds(cfg)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = get_device()
 
-    arch = cfg.get("model", {}).get("arch")
-    if "network_image_sizes" in cfg and arch in cfg["network_image_sizes"]:
-        network_input_size = cfg["network_image_sizes"][arch]
-    else:
-        raise KeyError(f"architecture '{arch}' not found in cfg['network_image_sizes'] and no default is available")
-
-    data_loader   = get_loader()
+    network_input_size = resolve_network_input_size(cfg)
 
     n_classes_segmentation = cfg["training"]["num_seg_classes"]
-    if n_classes_segmentation not in VALID_NUM_SEG_CLASSES:
-        raise ValueError(
-            f"Invalid configuration: training.num_seg_classes={n_classes_segmentation}. "
-            f"Expected one of {VALID_NUM_SEG_CLASSES}."
-        )
+    validate_num_segmentation_classes(n_classes_segmentation)
 
-    t_loader_head = data_loader(configs=cfg, split=TRAIN_SPLIT_NAME, network_input_size=network_input_size)
+    t_loader_batch = build_training_dataloader(cfg, network_input_size)
 
-    t_loader_batch = data.DataLoader(
-        t_loader_head,
-        batch_size=cfg["training"]["batch_size"],
-        num_workers=cfg["training"]["n_workers"],
-        shuffle=True,
-        )
-
-    model = get_model(cfg["model"], n_classes_segmentation).to(device)
-
-    if cfg["model"]["arch"] in CUSTOM_WEIGHT_INIT_MODELS:
-        model.apply(my_utils.weights_init)
-
-    fname_weight_init = cfg["weight_init_t"][cfg["model"]["arch"]]
-
-    if fname_weight_init != -1:
-        my_utils.load_weights_to_model(model, fname_weight_init, cfg["model"]["arch"])
-
-    optimizer_cls = get_optimizer(cfg)
-    optimizer_params = {k: v for k, v in cfg["training"]["optimizer"][cfg["training"]["optimizer"]["name"]].items()}
-
-    optimizer = optimizer_cls(model.parameters(), **optimizer_params)
-    logger.info("Using optimizer {}".format(optimizer))
-
-    scheduler = get_scheduler(optimizer, cfg["training"]["lr_schedule"])
-
-    loss_fn = get_loss_function(cfg)
-
-    logger.info("Using loss {}".format(loss_fn))
+    model = build_model(cfg, n_classes_segmentation, device)
+    optimizer = build_optimizer(cfg, model, logger)
+    scheduler = build_scheduler(cfg, optimizer)
+    loss_fn = build_loss_function(cfg, logger)
 
     start_iter = 0
 
     time_meter = averageMeter()
 
     best_loss_hmap = 1000000000.0
-    checkpoint_interval = cfg["training"].get("checkpoint_interval", cfg["training"]["train_iters"])
+    checkpoint_interval = get_checkpoint_interval(cfg)
     i = start_iter
     flag = True
 
@@ -205,14 +169,7 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
                 time_meter.reset()
 
             if (i + 1) % checkpoint_interval == 0 or (i + 1) == cfg["training"]["train_iters"]:
-                state = {"epoch": i + 1,
-                         "model_state": model.state_dict(),
-                         "best_loss": best_loss_hmap}
-
-                save_path = 'Mybest_' + str(i+1) + '.pkl'
-
-                torch.save(state, save_path)
-                logger.info("Saved checkpoint {}".format(save_path))
+                save_checkpoint(model, i + 1, best_loss=best_loss_hmap, logger=logger)
 
             if (i + 1) == cfg["training"]["train_iters"]:
                 flag = False
@@ -221,34 +178,18 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
 
 if __name__ == "__main__":
     # defaults (preserve prior behavior)
-    default_config = './configs/trit_net.yml'
-    default_logdir = './runs'
+    default_config = get_default_config_path()
+    default_logdir = get_default_logdir()
 
-    os.environ['CUDA_LAUNCH_BLOCKING']  = '1'
-    os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+    configure_debug_environment()
 
     parser = argparse.ArgumentParser(description="TRIT-Net trainer")
     parser.add_argument('-c', '--config', help='path to config yaml', default=default_config)
     parser.add_argument('-l', '--logdir', help='log directory', default=default_logdir)
     args = parser.parse_args()
 
-    with open(args.config) as fp:
-        cfg = yaml.safe_load(fp)
-
-    run_id = random.randint(1, 100000)
-    dir_log = args.logdir
-    os.makedirs(dir_log, exist_ok=True)
-
-    writer = SummaryWriter(log_dir=dir_log)
-    print("RUNDIR: {}".format(dir_log))
-
-    try:
-        shutil.copy(args.config, dir_log)
-    except Exception:
-        # copying config is best-effort; don't fail the run if it can't be copied
-        pass
-
-    logger = get_logger(dir_log)
+    cfg = load_config(args.config)
+    writer, logger = create_writer_and_logger(args.logdir, args.config)
     logger.info("Let's begin...")
 
     train(cfg, writer, logger)
