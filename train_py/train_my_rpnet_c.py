@@ -20,15 +20,15 @@ from tensorboardX               import SummaryWriter
 
 from ptsemseg.metrics           import averageMeter
 from ptsemseg.augmentations     import get_composed_augmentations
-from ptsemseg.models.registry   import AUX_OUTPUT_MODELS
-from helpers_my                 import my_loss               # Center/LeftRight Loss
 from ptsemseg.training          import build_loss_function
 from ptsemseg.training          import build_model
 from ptsemseg.training          import build_optimizer
 from ptsemseg.training          import build_scheduler
 from ptsemseg.training          import build_training_dataloader
+from ptsemseg.training          import compute_training_losses
 from ptsemseg.training          import configure_debug_environment
 from ptsemseg.training          import create_writer_and_logger
+from ptsemseg.training          import forward_model
 from ptsemseg.training          import get_checkpoint_interval
 from ptsemseg.training          import get_default_config_path
 from ptsemseg.training          import get_default_logdir
@@ -89,6 +89,7 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
             torch.cuda.empty_cache()
             i += 1
             start_ts = time.time()
+            arch = cfg["model"]["arch"]
 
             imgs_raw_fl_n                        = data_batch['img_raw_fl_n']                     
             gt_imgs_label_seg                    = data_batch['gt_img_label_seg']                 
@@ -104,38 +105,28 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
             model.train()
             optimizer.zero_grad()
 
-            if cfg["model"]["arch"] not in AUX_OUTPUT_MODELS:
-                if n_classes_segmentation == 4:
-                    outputs_seg, outputs_centerline, outputs_AFM = model(imgs_raw_fl_n)
-                elif n_classes_segmentation == 3:
-                    outputs_seg, outputs_centerline = model(imgs_raw_fl_n)
+            model_outputs = forward_model(
+                model=model,
+                imgs_raw_fl_n=imgs_raw_fl_n,
+                arch=arch,
+                n_classes_segmentation=n_classes_segmentation,
+            )
+            batch_losses = compute_training_losses(
+                loss_fn=loss_fn,
+                model_outputs=model_outputs,
+                gt_imgs_label_seg=gt_imgs_label_seg,
+                gt_labelmap_centerline=gt_labelmap_centerline,
+                gt_afm=gt_AFM,
+                device=device,
+                arch=arch,
+                n_classes_segmentation=n_classes_segmentation,
+            )
+            loss_this = batch_losses.total
+            loss_seg = batch_losses.segmentation
+            loss_centerline = batch_losses.centerline
 
-            else:
-                if n_classes_segmentation == 4:
-                    outputs_seg, outputs_centerline, outputs_AFM, aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n)
-                elif n_classes_segmentation == 3:
-                    outputs_seg, outputs_centerline, aux1, aux2, aux3, aux4 = model(imgs_raw_fl_n)
-
-            if cfg["model"]["arch"] not in AUX_OUTPUT_MODELS:
-                loss_seg = loss_fn(input=outputs_seg, target=gt_imgs_label_seg, dev = device)
-            else:
-                loss_seg_unique = loss_fn(input=outputs_seg, target=gt_imgs_label_seg, dev=device)
-                loss_seg = loss_fn(input=aux1, target=gt_imgs_label_seg, dev=device) + \
-                loss_fn(input=aux2, target=gt_imgs_label_seg, dev=device) + \
-                loss_fn(input=aux3, target=gt_imgs_label_seg, dev=device) + \
-                loss_fn(input=aux4, target=gt_imgs_label_seg, dev=device) + \
-                loss_seg_unique
-                loss_seg = loss_seg_unique
-
-            loss_centerline = my_loss.L1_loss(x_est=outputs_centerline, x_gt=gt_labelmap_centerline, n_chann = 1, b_sigmoid=True)
-
-            if n_classes_segmentation == 4:
-                loss_AFM = my_loss.L1_loss(x_est=outputs_AFM, x_gt=gt_AFM, n_chann=1,b_sigmoid=True)
-                loss_this = 1*loss_seg  + 1*loss_centerline  + 1*loss_AFM
-                loss_accum_AFM        += loss_AFM.item()
-
-            elif n_classes_segmentation == 3:
-                loss_this = 1*loss_seg  + 1*loss_centerline
+            if batch_losses.afm is not None:
+                loss_accum_AFM += batch_losses.afm.item()
 
             loss_this.backward()
             optimizer.step()

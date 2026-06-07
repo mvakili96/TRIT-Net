@@ -8,6 +8,14 @@ from ptsemseg.training.checkpoints import build_checkpoint_state
 from ptsemseg.training.checkpoints import get_checkpoint_interval
 from ptsemseg.training.checkpoints import get_checkpoint_path
 from ptsemseg.training.checkpoints import save_checkpoint
+from ptsemseg.training.losses import compute_afm_loss
+from ptsemseg.training.losses import compute_centerline_loss
+from ptsemseg.training.losses import compute_segmentation_loss
+from ptsemseg.training.losses import compute_training_losses
+from ptsemseg.training.losses import TrainingLosses
+from ptsemseg.training.outputs import forward_model
+from ptsemseg.training.outputs import ModelOutputs
+from ptsemseg.training.outputs import unpack_model_outputs
 from ptsemseg.training.setup import configure_debug_environment
 from ptsemseg.training.setup import create_writer_and_logger
 from ptsemseg.training.setup import get_default_config_path
