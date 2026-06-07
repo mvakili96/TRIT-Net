@@ -17,9 +17,9 @@ AUX_OUTPUT_MODELS = frozenset((MODEL_BISENET_V2,))
 
 def get_model_registry():
     from ptsemseg.models.rpnet_c import rpnet_c
-    from ptsemseg.models.comparison_models import DinkNet34
-    from ptsemseg.models.comparison_models import ERFNet
-    from ptsemseg.models.comparison_models import Bisenet_v2
+    from ptsemseg.models.dlinknet import DinkNet34
+    from ptsemseg.models.erfnet import ERFNet
+    from ptsemseg.models.bisenet_v2 import Bisenet_v2
     from ptsemseg.models.segformer import SegFormer
     from ptsemseg.models.SegEncode_HarDDecode import SegHarDNet
 
