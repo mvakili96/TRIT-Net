@@ -4,19 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 import collections
 
-class ConvLayer(nn.Sequential):
-    def __init__(self, in_channels, out_channels, kernel=3, stride=1, dropout=0.1):
-        super().__init__()
-        self.add_module('conv', nn.Conv2d(in_channels, out_channels, kernel_size=kernel,
-                                          stride=stride, padding=kernel//2, bias = False))
-        self.add_module('norm', nn.BatchNorm2d(out_channels))
-        self.add_module('relu', nn.ReLU(inplace=True))
-
-        #print(kernel, 'x', kernel, 'x', in_channels, 'x', out_channels)
-
-    def forward(self, x):
-        return super().forward(x)
-        
+from ptsemseg.models.common import ConvLayer
 
 class BRLayer(nn.Sequential):
     def __init__(self, in_channels):
