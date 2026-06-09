@@ -88,14 +88,32 @@ The current default config also contains machine-local assumptions:
 
 ## Quick setup (recommended)
 
-Create a conda environment and install dependencies. Adjust names/versions as required:
+Create a conda environment and install dependencies. The repo now separates:
+
+- `requirements.txt` — core runtime packages for training and model import
+- `requirements-dev.txt` — core runtime packages plus formatter/linter tools
+- `requirements-full.txt` — the broader pinned local environment snapshot that was previously stored in `requirements.txt`
+
+Recommended setup:
 
 ```bash
 conda create -n trit python=3.10 -y
 conda activate trit
-pip install -r requirements.txt  # if you maintain one locally
-# or install minimal deps
-pip install torch torchvision tensorboardX pyyaml opencv-python
+
+# install torch/torchvision for your CPU/CUDA setup if needed
+# see: https://pytorch.org/get-started/locally/
+
+pip install -r requirements.txt
+```
+
+Optional:
+
+```bash
+# for local formatting/linting
+pip install -r requirements-dev.txt
+
+# for recreating the broader historical environment snapshot
+pip install -r requirements-full.txt
 ```
 
 ## Run training (example)
