@@ -21,3 +21,5 @@ train_py/*
 !train_py/*.py
 
 repo_cleanup_plan.md
+demo_eval_integration_plan.md
+final_cleanup_audit.md
