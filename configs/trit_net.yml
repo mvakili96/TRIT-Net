@@ -7,7 +7,6 @@ weight_init_t:
     bisenet_v2: ./runs/hardnet/cur/Mybest_bis_4class&cen.pkl      # used to be 20000 for original railsem
     segformer: ./runs/hardnet/cur/Mybest_Segf_DR.pkl
     seghardnet: ./runs/hardnet/cur/TRIT-Net-Encoder_step077000.pth
-    mask2former: ./runs/hardnet/cur/Mybest_73000.pkl
 network_image_sizes:
     rpnet_c: {h: 540, w: 960}
     dlinknet_34: {h: 540, w: 960}
@@ -15,7 +14,6 @@ network_image_sizes:
     bisenet_v2: {h: 540, w: 960}
     segformer: {h: 544, w: 960}
     seghardnet: {h: 544, w: 960}
-    mask2former: {h: 544, w: 960}
 data:
     root: ./data/RailSem19/
     rgb_mean: [113.95, 118.05, 110.18]
