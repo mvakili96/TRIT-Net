@@ -12,8 +12,6 @@ repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
-
 from torch.utils                import data
 from tqdm                       import tqdm
 from tensorboardX               import SummaryWriter

@@ -61,7 +61,15 @@ def build_optimizer(cfg, model, logger):
 
 
 def build_scheduler(cfg, optimizer):
-    return get_scheduler(optimizer, cfg["training"]["lr_schedule"])
+    scheduler_cfg = cfg["training"]["lr_schedule"]
+    if scheduler_cfg is None:
+        return get_scheduler(optimizer, None)
+
+    resolved_scheduler_cfg = dict(scheduler_cfg)
+    if "max_iter" not in resolved_scheduler_cfg:
+        resolved_scheduler_cfg["max_iter"] = cfg["training"]["train_iters"]
+
+    return get_scheduler(optimizer, resolved_scheduler_cfg)
 
 
 def build_loss_function(cfg, logger):

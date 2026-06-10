@@ -77,7 +77,7 @@ Important sections:
 - `training.num_seg_classes` — must be `3` or `4` (trainer enforces this)
 - `training.checkpoint_interval` — training-only checkpoint save interval
 - `training.optimizer` — optimizer selection and hyperparams
-- `training.lr_schedule` — scheduler selection and params
+- `training.lr_schedule` — scheduler selection and params; when `max_iter` is omitted, the trainer uses `training.train_iters`
 - `weight_init_t` — per-architecture checkpoint-init paths; these are local experiment paths and may need to be edited before first use on another machine
 
 The current default config also contains machine-local assumptions:
@@ -165,5 +165,5 @@ ruff check . && black .
 
 ## Notes
 
-- The training entry path sets `PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128` before imports and configures `CUDA_LAUNCH_BLOCKING=1` plus `TF_ENABLE_ONEDNN_OPTS=0` through the training setup helper. These are current runtime defaults, not config-file settings.
+- The training setup helper currently centralizes these runtime defaults: `PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128`, `CUDA_LAUNCH_BLOCKING=1`, and `TF_ENABLE_ONEDNN_OPTS=0`. These are code-level defaults, not config-file settings.
 - The project was bootstrapped from a compact ptsemseg-derived pipeline tailored for rail segmentation tasks.

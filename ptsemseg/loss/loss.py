@@ -5,6 +5,8 @@ import numpy as np
 import cv2
 from torch.autograd import Variable as V
 
+from ptsemseg.loader.constants import IGNORE_LABEL
+
 
 def cross_entropy2d(input, target, weight=None, size_average=True):
     n, c, h, w = input.size()
@@ -17,7 +19,7 @@ def cross_entropy2d(input, target, weight=None, size_average=True):
     target = target.view(-1)
     
     loss = F.cross_entropy(
-              input, target, weight=weight, size_average=size_average, ignore_index=250, reduction='mean')
+              input, target, weight=weight, size_average=size_average, ignore_index=IGNORE_LABEL, reduction='mean')
 
     return loss
 
@@ -56,7 +58,7 @@ def bootstrapped_cross_entropy2d(input, target, min_K, loss_th, weight=None, siz
         target = target.view(-1)
 
         loss = F.cross_entropy(
-            input, target, weight=weight, reduction='none', ignore_index=250
+            input, target, weight=weight, reduction='none', ignore_index=IGNORE_LABEL
         )
 
         sorted_loss, _ = torch.sort(loss, descending=True)

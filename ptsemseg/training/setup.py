@@ -14,6 +14,11 @@ from ptsemseg.utils import get_logger
 DEFAULT_CONFIG_PATH = "./configs/trit_net.yml"
 DEFAULT_LOGDIR = "./runs"
 DEFAULT_SEED = 1337
+DEFAULT_RUNTIME_ENV = {
+    "PYTORCH_CUDA_ALLOC_CONF": "max_split_size_mb:128",
+    "CUDA_LAUNCH_BLOCKING": "1",
+    "TF_ENABLE_ONEDNN_OPTS": "0",
+}
 
 
 def get_default_config_path() -> str:
@@ -25,8 +30,8 @@ def get_default_logdir() -> str:
 
 
 def configure_debug_environment() -> None:
-    os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
-    os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+    for env_name, env_value in DEFAULT_RUNTIME_ENV.items():
+        os.environ[env_name] = env_value
 
 
 def load_config(config_path: str) -> Dict:
