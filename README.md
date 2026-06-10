@@ -8,7 +8,7 @@ TRIT-Net is a compact framework focused on rail-track scene understanding. It pr
 - Config-driven training via YAML files in `configs/`
 - Custom schedulers and optimizer factories
 - Reproducible training loop in `train_py/train_my_rpnet_c.py`
-- Current default loader/config path is set up for a RailSem-style dataset layout
+- Current tracked training path uses `Triplet_Loader` with a RailSem-style aligned-file dataset layout
 
 ## Repository layout
 
@@ -41,6 +41,8 @@ cleaned up by refactors unless that is requested explicitly.
 
 Checkpoint files are different: they are currently saved as
 `Mybest_<iter>.pkl` in the current working directory, not inside `runs/`.
+If you launch training from the repository root using the recommended command,
+that means checkpoint files are written into the repository root itself.
 
 Current cleanup work is intended to be behavior-preserving: avoid changing
 training logic, model definitions, dataset behavior, losses, metrics,
@@ -58,6 +60,10 @@ The current `Triplet_Loader` expects these directories to contain aligned
 filenames in sorted order. Training uses the first `train_split` sorted items
 from each directory, so the dataset layout is effectively a RailSem-style
 paired-file layout rather than a generic multi-dataset abstraction.
+
+At the moment, the tracked training path is documented for this layout only.
+The README does not claim a separate actively maintained training path for
+RailDB or RailSet.
 
 Loader contract: loaders return a dict with keys used by the trainer, e.g.:
 
@@ -78,13 +84,20 @@ Important sections:
 - `training.checkpoint_interval` — training-only checkpoint save interval
 - `training.optimizer` — optimizer selection and hyperparams
 - `training.lr_schedule` — scheduler selection and params; when `max_iter` is omitted, the trainer uses `training.train_iters`
-- `weight_init_t` — per-architecture checkpoint-init paths; these are local experiment paths and may need to be edited before first use on another machine
+- `weight_init_t` — per-architecture initialization-checkpoint paths used before training starts; the trainer looks up `weight_init_t[model.arch]` and loads that checkpoint unless the value is `-1`
 
 The current default config also contains machine-local assumptions:
 
 - `data.root` points to `./data/RailSem19/`
 - `weight_init_t.*` points to local checkpoint files under `./runs/...`
 - `model.arch` selects the active architecture to train
+
+`weight_init_t` expects a checkpoint compatible with the selected architecture.
+The current loader accepts checkpoints containing either `model_state` or
+`state_dict`. If the selected path is wrong for your machine, or you want to
+train from scratch, edit that entry before launching training.
+This is one of the first settings a new user should expect to change on a new
+machine.
 
 ## Quick setup (recommended)
 
@@ -120,6 +133,13 @@ pip install -r requirements-full.txt
 
 Use the default config or pass a config path with `-c/--config`.
 
+Before the first real run on a new machine, check these four items:
+
+1. Install the core runtime dependencies from `requirements.txt`, plus a compatible `torch` and `torchvision` build for your CPU/CUDA setup.
+2. Confirm that `data.root` in `configs/trit_net.yml` points at a dataset directory laid out as `jpgs/`, `C_image/`, `AFM/`, and `Seg3` or `Seg4` with aligned sorted filenames.
+3. Confirm that `weight_init_t[model.arch]` points to a checkpoint that exists on your machine, or change that value to `-1` if you want to skip initialization from a checkpoint.
+4. Decide where you want checkpoint files to land: by default they are written into the current working directory when you run the trainer.
+
 Simple run example (from repo root):
 
 ```bash
@@ -129,12 +149,22 @@ python train_py/train_my_rpnet_c.py
 
 For a short dry-run, use a temporary config with a small `train_iters`, `checkpoint_interval`, and `batch_size`, then pass it with `-c`.
 
+If you are unsure whether your setup is correct, start with:
+
+```bash
+python train_py/train_my_rpnet_c.py --help
+```
+
+Then try a one-iteration smoke run with a temporary config rather than a full training run.
+
 ## Logs and checkpoints
 
 - TensorBoard event files are written directly under the selected logdir, which defaults to `./runs`
 - The trainer also copies the config file into the selected logdir on a best-effort basis
 - The Python logger writes `run_<timestamp>.log` into the selected logdir
 - Model checkpoints are saved as `Mybest_<iter>.pkl` in the current working directory
+- Checkpoints are written when `(iteration + 1) % training.checkpoint_interval == 0` and again at the final training iteration
+- If you want checkpoints somewhere else, that is not currently a config option; it would require changing the checkpoint helper or the process working directory
 
 View logs:
 
@@ -145,7 +175,7 @@ tensorboard --logdir runs
 ## Adding a new model or dataset
 
 - New model: add a Python file under `ptsemseg/models/` and ensure it follows the multi-head output contract. Register or import it where the project selects models.
-- New dataset: follow the pattern in `ptsemseg/loader/` — return the same dict keys and respect the `size_img_rsz`/`size_out` contract.
+- New dataset: follow the pattern in `ptsemseg/loader/` — return the same dict keys and respect the `size_img_rsz`/`size_out` contract. Note that the currently documented and verified training path is the RailSem-style aligned-file layout described above.
 - Add a new config in `configs/` and set `fname_config` in the trainer or extend the trainer CLI.
 
 ## Linting & formatting
