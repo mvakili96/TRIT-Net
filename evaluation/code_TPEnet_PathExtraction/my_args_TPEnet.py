@@ -7,10 +7,8 @@ import numpy as np
 import argparse
 
 from runtime_defaults import get_camera_calibration_path
-from runtime_defaults import get_default_algorithm_file_weight
-from runtime_defaults import get_default_input_dir
-from runtime_defaults import get_default_output_dir
-from runtime_defaults import get_default_processing_size
+from runtime_defaults import get_algorithm_runtime_defaults
+from runtime_defaults import get_operation_runtime_defaults
 
 
 ########################################################################################################################
@@ -31,21 +29,30 @@ def str2bool(argument):
 ### define parameters for operation (outside PE_TPEnet)
 ########################################################################################################################
 def define_args_operation(DATASET_for_use, architecture):
+    operation_defaults = get_operation_runtime_defaults(DATASET_for_use, architecture)
+
     parser = argparse.ArgumentParser(description="Params_operation")
     parser.add_argument(
         '--size_img_process',
         type=int,
-        default=get_default_processing_size(architecture),
+        default=operation_defaults["size_img_process"],
         help='image size used in a process',
     )
     parser.add_argument(
         '--dir_input',
         type=str,
-        default=get_default_input_dir(DATASET_for_use),
+        default=operation_defaults["dir_input"],
         help='directory for input images',
     )
-    parser.add_argument('--dir_output', type=str, default=get_default_output_dir(), help='directory for output images')
-    parser.add_argument('--b_save_res_imgs_as_file', type=str2bool, nargs='?', const=True, default=False, help='Save res imgs as file?')
+    parser.add_argument('--dir_output', type=str, default=operation_defaults["dir_output"], help='directory for output images')
+    parser.add_argument(
+        '--b_save_res_imgs_as_file',
+        type=str2bool,
+        nargs='?',
+        const=True,
+        default=operation_defaults["b_save_res_imgs_as_file"],
+        help='Save res imgs as file?',
+    )
 
     return parser
 #END
@@ -59,6 +66,7 @@ def define_args_operation(DATASET_for_use, architecture):
 ########################################################################################################################
 def define_args_algorithm(DATASET_for_use, architecture):
     parser = argparse.ArgumentParser(description="Params_algorithm")
+    algorithm_defaults = get_algorithm_runtime_defaults(DATASET_for_use)
 
 
     if DATASET_for_use == 0:
@@ -67,7 +75,14 @@ def define_args_algorithm(DATASET_for_use, architecture):
         ###===================================================================================================
 
         ### basic
-        parser.add_argument('--b_create_imgs_res_interim', type=str2bool, nargs='?', const=True, default=False, help='create interim res images')
+        parser.add_argument(
+            '--b_create_imgs_res_interim',
+            type=str2bool,
+            nargs='?',
+            const=True,
+            default=algorithm_defaults["b_create_imgs_res_interim"],
+            help='create interim res images',
+        )
 
         ### network weight
         # TPEnet_a_weights_20800
@@ -76,38 +91,38 @@ def define_args_algorithm(DATASET_for_use, architecture):
         parser.add_argument(
             '--file_weight',
             type=str,
-            default=get_default_algorithm_file_weight(DATASET_for_use),
+            default=algorithm_defaults["file_weight"],
             help='location of network weight file',
         )
 
         ### params for detection of local maxima triplets
-        parser.add_argument('--param_triplet_nms_alpha', type=float, default=235.0/270.0, help='param (alpha) for detection of local maxima triplets')
-        parser.add_argument('--param_triplet_nms_beta', type=float, default=-220.0, help='param (beta) for detection of local maxima triplets')
-        parser.add_argument('--param_triplet_nms_min', type=float, default=15.0, help='param (min) for detection of local maxima triplets')
-        parser.add_argument('--param_triplet_nms_scale', type=float, default=0.1, help='param (scale) for detection of local maxima triplets')
+        parser.add_argument('--param_triplet_nms_alpha', type=float, default=algorithm_defaults["param_triplet_nms_alpha"], help='param (alpha) for detection of local maxima triplets')
+        parser.add_argument('--param_triplet_nms_beta', type=float, default=algorithm_defaults["param_triplet_nms_beta"], help='param (beta) for detection of local maxima triplets')
+        parser.add_argument('--param_triplet_nms_min', type=float, default=algorithm_defaults["param_triplet_nms_min"], help='param (min) for detection of local maxima triplets')
+        parser.add_argument('--param_triplet_nms_scale', type=float, default=algorithm_defaults["param_triplet_nms_scale"], help='param (scale) for detection of local maxima triplets')
 
 
         ### params for inverse perspective mapping (for 3d data) -> would be re-set by set_value_for_args_algorithm()
         parser.add_argument('--param_3D_ipm_camera_intrinsic_matrix', type=float, default=np.zeros(shape=(3,3)), help='param for 3D data - camera intrinsic matrix')
-        parser.add_argument('--param_3D_ipm_camera_pitch_angle', type=float, default=-90.0, help='param for 3D data - camera pitch angle (deg)')
-        parser.add_argument('--param_3D_ipm_camera_pos_wrt_ground_plane', type=float, default=np.array([0.0, 0.0, 1.5]), help='param for 3D data - camera position wrt ground plane (meter)')
-        parser.add_argument('--param_3D_ipm_img_pixel_per_meter', type=float, default=20.0, help='pixel per meter in ipm-img')
-        parser.add_argument('--param_3D_ipm_img_height', type=int, default=1000, help='height of ipm-img')
-        parser.add_argument('--param_3D_ipm_img_width', type=int, default=400, help='width of ipm-img')
+        parser.add_argument('--param_3D_ipm_camera_pitch_angle', type=float, default=algorithm_defaults["param_3D_ipm_camera_pitch_angle"], help='param for 3D data - camera pitch angle (deg)')
+        parser.add_argument('--param_3D_ipm_camera_pos_wrt_ground_plane', type=float, default=np.array(algorithm_defaults["param_3D_ipm_camera_pos_wrt_ground_plane"]), help='param for 3D data - camera position wrt ground plane (meter)')
+        parser.add_argument('--param_3D_ipm_img_pixel_per_meter', type=float, default=algorithm_defaults["param_3D_ipm_img_pixel_per_meter"], help='pixel per meter in ipm-img')
+        parser.add_argument('--param_3D_ipm_img_height', type=int, default=algorithm_defaults["param_3D_ipm_img_height"], help='height of ipm-img')
+        parser.add_argument('--param_3D_ipm_img_width', type=int, default=algorithm_defaults["param_3D_ipm_img_width"], help='width of ipm-img')
 
         ### params for rail path graph
-        parser.add_argument('--param_rpg_subedge_thres_dx_3d', type=float, default=10, help='(meter)')
-        parser.add_argument('--param_rpg_subedge_thres_dy_img', type=int, default=10, help='(pixel)')
-        parser.add_argument('--param_rpg_subedge_height_section', type=int, default=5, help='(pixel)')
+        parser.add_argument('--param_rpg_subedge_thres_dx_3d', type=float, default=algorithm_defaults["param_rpg_subedge_thres_dx_3d"], help='(meter)')
+        parser.add_argument('--param_rpg_subedge_thres_dy_img', type=int, default=algorithm_defaults["param_rpg_subedge_thres_dy_img"], help='(pixel)')
+        parser.add_argument('--param_rpg_subedge_height_section', type=int, default=algorithm_defaults["param_rpg_subedge_height_section"], help='(pixel)')
 
-        parser.add_argument('--param_rpg_nodeedge_thres_dist_img_for_seed', type=int, default=296, help='(pixel)')
-        parser.add_argument('--param_rpg_nodeedge_thres_dx_3d', type=float, default=25, help='(meter)')
-        parser.add_argument('--param_rpg_nodeedge_thres_dy_img', type=int, default=20, help='(pixel)')
+        parser.add_argument('--param_rpg_nodeedge_thres_dist_img_for_seed', type=int, default=algorithm_defaults["param_rpg_nodeedge_thres_dist_img_for_seed"], help='(pixel)')
+        parser.add_argument('--param_rpg_nodeedge_thres_dx_3d', type=float, default=algorithm_defaults["param_rpg_nodeedge_thres_dx_3d"], help='(meter)')
+        parser.add_argument('--param_rpg_nodeedge_thres_dy_img', type=int, default=algorithm_defaults["param_rpg_nodeedge_thres_dy_img"], help='(pixel)')
 
-        parser.add_argument('--param_rpg_path_vertices_valid_y_min', type=float, default=100.0, help='(meter)')
+        parser.add_argument('--param_rpg_path_vertices_valid_y_min', type=float, default=algorithm_defaults["param_rpg_path_vertices_valid_y_min"], help='(meter)')
 
-        parser.add_argument('--param_rpg_poly_fitting_y_max', type=float, default=150.0, help='(meter)')
-        parser.add_argument('--param_rpg_poly_fitting_degree', type=int, default=2, help='degree of polynomial')
+        parser.add_argument('--param_rpg_poly_fitting_y_max', type=float, default=algorithm_defaults["param_rpg_poly_fitting_y_max"], help='(meter)')
+        parser.add_argument('--param_rpg_poly_fitting_degree', type=int, default=algorithm_defaults["param_rpg_poly_fitting_degree"], help='degree of polynomial')
 
     else:
         ###===================================================================================================
@@ -115,52 +130,52 @@ def define_args_algorithm(DATASET_for_use, architecture):
         ###===================================================================================================
 
         ### basic
-        parser.add_argument('--b_create_imgs_res_interim', type=str2bool, nargs='?', const=True, default=False,
+        parser.add_argument('--b_create_imgs_res_interim', type=str2bool, nargs='?', const=True, default=algorithm_defaults["b_create_imgs_res_interim"],
                             help='create interim res images')
 
         ### network weight
         parser.add_argument(
             '--file_weight',
             type=str,
-            default=get_default_algorithm_file_weight(DATASET_for_use),
+            default=algorithm_defaults["file_weight"],
             help='location of network weight file',
         )
 
         ### params for detection of local maxima triplets
-        parser.add_argument('--param_triplet_nms_alpha', type=float, default=145.0 / 270.0,
+        parser.add_argument('--param_triplet_nms_alpha', type=float, default=algorithm_defaults["param_triplet_nms_alpha"],
                             help='param (alpha) for detection of local maxima triplets')
-        parser.add_argument('--param_triplet_nms_beta', type=float, default=-140.0,
+        parser.add_argument('--param_triplet_nms_beta', type=float, default=algorithm_defaults["param_triplet_nms_beta"],
                             help='param (beta) for detection of local maxima triplets')
-        parser.add_argument('--param_triplet_nms_min', type=float, default=5.0,
+        parser.add_argument('--param_triplet_nms_min', type=float, default=algorithm_defaults["param_triplet_nms_min"],
                             help='param (min) for detection of local maxima triplets')
-        parser.add_argument('--param_triplet_nms_scale', type=float, default=0.5,
+        parser.add_argument('--param_triplet_nms_scale', type=float, default=algorithm_defaults["param_triplet_nms_scale"],
                             help='param (scale) for detection of local maxima triplets')
 
         ### params for inverse perspective mapping (for 3d data) -> would be re-set by set_value_for_args_algorithm()
         parser.add_argument('--param_3D_ipm_camera_intrinsic_matrix', type=float, default=np.zeros(shape=(3, 3)),
                             help='param for 3D data - camera intrinsic matrix')
-        parser.add_argument('--param_3D_ipm_camera_pitch_angle', type=float, default=-90.0,
+        parser.add_argument('--param_3D_ipm_camera_pitch_angle', type=float, default=algorithm_defaults["param_3D_ipm_camera_pitch_angle"],
                             help='param for 3D data - camera pitch angle (deg)')
-        parser.add_argument('--param_3D_ipm_camera_pos_wrt_ground_plane', type=float, default=np.array([0.0, 0.0, 2.0]),
+        parser.add_argument('--param_3D_ipm_camera_pos_wrt_ground_plane', type=float, default=np.array(algorithm_defaults["param_3D_ipm_camera_pos_wrt_ground_plane"]),
                             help='param for 3D data - camera position wrt ground plane (meter)')
-        parser.add_argument('--param_3D_ipm_img_pixel_per_meter', type=float, default=20.0,
+        parser.add_argument('--param_3D_ipm_img_pixel_per_meter', type=float, default=algorithm_defaults["param_3D_ipm_img_pixel_per_meter"],
                             help='pixel per meter in ipm-img')
-        parser.add_argument('--param_3D_ipm_img_height', type=int, default=1000, help='height of ipm-img')
-        parser.add_argument('--param_3D_ipm_img_width', type=int, default=400, help='width of ipm-img')
+        parser.add_argument('--param_3D_ipm_img_height', type=int, default=algorithm_defaults["param_3D_ipm_img_height"], help='height of ipm-img')
+        parser.add_argument('--param_3D_ipm_img_width', type=int, default=algorithm_defaults["param_3D_ipm_img_width"], help='width of ipm-img')
 
         ### params for rail path graph
-        parser.add_argument('--param_rpg_subedge_thres_dx_3d', type=float, default=0.5, help='(meter)')
-        parser.add_argument('--param_rpg_subedge_thres_dy_img', type=int, default=10, help='(pixel)')
-        parser.add_argument('--param_rpg_subedge_height_section', type=int, default=5, help='(pixel)')
+        parser.add_argument('--param_rpg_subedge_thres_dx_3d', type=float, default=algorithm_defaults["param_rpg_subedge_thres_dx_3d"], help='(meter)')
+        parser.add_argument('--param_rpg_subedge_thres_dy_img', type=int, default=algorithm_defaults["param_rpg_subedge_thres_dy_img"], help='(pixel)')
+        parser.add_argument('--param_rpg_subedge_height_section', type=int, default=algorithm_defaults["param_rpg_subedge_height_section"], help='(pixel)')
 
-        parser.add_argument('--param_rpg_nodeedge_thres_dist_img_for_seed', type=int, default=96, help='(pixel)')
-        parser.add_argument('--param_rpg_nodeedge_thres_dx_3d', type=float, default=1.0, help='(meter)')
-        parser.add_argument('--param_rpg_nodeedge_thres_dy_img', type=int, default=20, help='(pixel)')
+        parser.add_argument('--param_rpg_nodeedge_thres_dist_img_for_seed', type=int, default=algorithm_defaults["param_rpg_nodeedge_thres_dist_img_for_seed"], help='(pixel)')
+        parser.add_argument('--param_rpg_nodeedge_thres_dx_3d', type=float, default=algorithm_defaults["param_rpg_nodeedge_thres_dx_3d"], help='(meter)')
+        parser.add_argument('--param_rpg_nodeedge_thres_dy_img', type=int, default=algorithm_defaults["param_rpg_nodeedge_thres_dy_img"], help='(pixel)')
 
-        parser.add_argument('--param_rpg_path_vertices_valid_y_min', type=float, default=10.0, help='(meter)')
+        parser.add_argument('--param_rpg_path_vertices_valid_y_min', type=float, default=algorithm_defaults["param_rpg_path_vertices_valid_y_min"], help='(meter)')
 
-        parser.add_argument('--param_rpg_poly_fitting_y_max', type=float, default=150.0, help='(meter)')
-        parser.add_argument('--param_rpg_poly_fitting_degree', type=int, default=2, help='degree of polynomial')
+        parser.add_argument('--param_rpg_poly_fitting_y_max', type=float, default=algorithm_defaults["param_rpg_poly_fitting_y_max"], help='(meter)')
+        parser.add_argument('--param_rpg_poly_fitting_degree', type=int, default=algorithm_defaults["param_rpg_poly_fitting_degree"], help='degree of polynomial')
 
     #end
 
@@ -187,6 +202,8 @@ def set_value_for_args_algorithm(DATASET_for_use, args):
     :return:
     """
 
+    algorithm_defaults = get_algorithm_runtime_defaults(DATASET_for_use)
+
     if DATASET_for_use == 0:
         ###===================================================================================================
         ### For YDHR
@@ -211,11 +228,11 @@ def set_value_for_args_algorithm(DATASET_for_use, args):
         ### set value for args
         ###---------------------------------------------------------------------------------------------------
         args.param_3D_ipm_camera_intrinsic_matrix = param_mat_K
-        args.param_3D_ipm_camera_pitch_angle = -90.0 - 3.5
-        args.param_3D_ipm_camera_pos_wrt_ground_plane = np.array([0.0, 0.0, 1.5])
-        args.param_3D_ipm_img_pixel_per_meter = 20.0
-        args.param_3D_ipm_img_height = 1000
-        args.param_3D_ipm_img_width = 400
+        args.param_3D_ipm_camera_pitch_angle = algorithm_defaults["param_3D_ipm_camera_pitch_angle"]
+        args.param_3D_ipm_camera_pos_wrt_ground_plane = np.array(algorithm_defaults["param_3D_ipm_camera_pos_wrt_ground_plane"])
+        args.param_3D_ipm_img_pixel_per_meter = algorithm_defaults["param_3D_ipm_img_pixel_per_meter"]
+        args.param_3D_ipm_img_height = algorithm_defaults["param_3D_ipm_img_height"]
+        args.param_3D_ipm_img_width = algorithm_defaults["param_3D_ipm_img_width"]
 
     else:
         ###===================================================================================================
@@ -247,11 +264,11 @@ def set_value_for_args_algorithm(DATASET_for_use, args):
         ### set value for args
         ###---------------------------------------------------------------------------------------------------
         args.param_3D_ipm_camera_intrinsic_matrix = param_mat_K
-        args.param_3D_ipm_camera_pitch_angle = -90.0
-        args.param_3D_ipm_camera_pos_wrt_ground_plane = np.array([0.0, 0.0, 1.75])
-        args.param_3D_ipm_img_pixel_per_meter = 20.0
-        args.param_3D_ipm_img_height = 1000
-        args.param_3D_ipm_img_width = 400
+        args.param_3D_ipm_camera_pitch_angle = algorithm_defaults["param_3D_ipm_camera_pitch_angle"]
+        args.param_3D_ipm_camera_pos_wrt_ground_plane = np.array(algorithm_defaults["param_3D_ipm_camera_pos_wrt_ground_plane"])
+        args.param_3D_ipm_img_pixel_per_meter = algorithm_defaults["param_3D_ipm_img_pixel_per_meter"]
+        args.param_3D_ipm_img_height = algorithm_defaults["param_3D_ipm_img_height"]
+        args.param_3D_ipm_img_width = algorithm_defaults["param_3D_ipm_img_width"]
     #end
 
     return args

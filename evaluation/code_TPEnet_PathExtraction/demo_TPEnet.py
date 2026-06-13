@@ -13,7 +13,10 @@ import sys
 import nums_from_string
 import torch
 
+from runtime_defaults import get_demo_runtime_settings
 from runtime_defaults import get_demo_preset
+from runtime_defaults import get_metrics_output_dir
+from runtime_defaults import get_output_subdirs
 
 import PE_TPEnet
 import my_args_TPEnet
@@ -27,7 +30,9 @@ from my_helper import my_helper_GT
 ###=====================================================================================================================
 ### 0. setting
 ###=====================================================================================================================
-title_testrun_this = 'TEST7_RUN2_NRS_GOPRO'
+runtime_settings = get_demo_runtime_settings()
+
+title_testrun_this = runtime_settings["title_testrun_this"]
 
 fname_pathlabel_gt_in = None
 format_fname_img_in   = None
@@ -35,15 +40,15 @@ format_fname_img_out  = None
 w_img = 960
 dx_valid_a = 0
 dx_valid_b = 0
+metrics_output_dir = get_metrics_output_dir()
+output_subdirs = get_output_subdirs()
 
-if title_testrun_this is 'TEST7_RUN2_NRS_GOPRO':
-    demo_preset = get_demo_preset(title_testrun_this)
-    fname_pathlabel_gt_in = demo_preset["fname_pathlabel_gt_in"]
-    format_fname_img_in   = demo_preset["format_fname_img_in"]
-    format_fname_img_out  = demo_preset["format_fname_img_out"]
-    dx_valid_a = demo_preset["dx_valid_a"]
-    dx_valid_b = demo_preset["dx_valid_b"]
-#end
+demo_preset = runtime_settings.get("demo_preset", get_demo_preset(title_testrun_this))
+fname_pathlabel_gt_in = demo_preset["fname_pathlabel_gt_in"]
+format_fname_img_in   = demo_preset["format_fname_img_in"]
+format_fname_img_out  = demo_preset["format_fname_img_out"]
+dx_valid_a = demo_preset["dx_valid_a"]
+dx_valid_b = demo_preset["dx_valid_b"]
 
 obj_helper_GT = my_helper_GT.MyHelper_GT(title_testrun_this, w_img, dx_valid_a, dx_valid_b)
 
@@ -56,22 +61,22 @@ totnum_steps = len(list_pathlabel_gt_in)
 ###==================================================================================================================
 ### 1. set parameters
 ###==================================================================================================================
-architecture    = 5    # 0 for TPE-Net - 1 for DLink-Net34 - 2 for erfnet - 3 for BisenetV2 - 4 for segformer - 5 SegHarDNet
+architecture    = runtime_settings["architecture"]    # 0 for TPE-Net - 1 for DLink-Net34 - 2 for erfnet - 3 for BisenetV2 - 4 for segformer - 5 SegHarDNet
 
-num_seg_classes = 4
-num_channel_reg = 1
+num_seg_classes = runtime_settings["num_seg_classes"]
+num_channel_reg = runtime_settings["num_channel_reg"]
 
-seg_in_pp       = False
-flag_miou       = False
+seg_in_pp       = runtime_settings["seg_in_pp"]
+flag_miou       = runtime_settings["flag_miou"]
 
-flag_save_img   = 1
-flag_save_data  = 1
-flag_single_multiple_path_evaluation = 1
+flag_save_img   = runtime_settings["flag_save_img"]
+flag_save_data  = runtime_settings["flag_save_data"]
+flag_single_multiple_path_evaluation = runtime_settings["flag_single_multiple_path_evaluation"]
 
-data_in_use     = 4      # 0 for RailSem19 - 1 for RailSet - 2 for RailDB - 3 for YDHR - 4 for others without GT data
+data_in_use     = runtime_settings["data_in_use"]      # 0 for RailSem19 - 1 for RailSet - 2 for RailDB - 3 for YDHR - 4 for others without GT data
 
 ### define args
-DATASET_for_use = 0
+DATASET_for_use = runtime_settings["dataset_for_use"]
 parser_oper = my_args_TPEnet.define_args_operation(data_in_use, architecture)
 parser_alg  = my_args_TPEnet.define_args_algorithm(DATASET_for_use, architecture)
 
@@ -353,10 +358,10 @@ for my_idx,fname_img_in in enumerate(list_fnames_img):
     ### 3.5.6 save image
     if flag_save_img == 1:
 
-        cv2.imwrite("IMG/resluting_image_" + str(img_idx) + ".jpg", image_showing_evaluation_res)
-        cv2.imwrite("SEG/resluting_image_" + str(img_idx) + ".bmp", img_res_seg)
-        cv2.imwrite("CEN/resluting_image_" + str(img_idx) + ".png", img_res_centerness)
-        cv2.imwrite("AFM/resluting_image_" + str(img_idx) + ".png", img_res_AFM_direct)
+        cv2.imwrite(os.path.join(output_subdirs["img"], "resluting_image_" + str(img_idx) + ".jpg"), image_showing_evaluation_res)
+        cv2.imwrite(os.path.join(output_subdirs["seg"], "resluting_image_" + str(img_idx) + ".bmp"), img_res_seg)
+        cv2.imwrite(os.path.join(output_subdirs["cen"], "resluting_image_" + str(img_idx) + ".png"), img_res_centerness)
+        cv2.imwrite(os.path.join(output_subdirs["afm"], "resluting_image_" + str(img_idx) + ".png"), img_res_AFM_direct)
 
 
         # gt_final_dict_xs_img_rail_LR = json.load(open("railsem_jsons_test_modified2/railsem_jsons_test_modified" + str(my_idx) + ".json", 'r'))
@@ -411,7 +416,7 @@ sum_time_net = 0
 sum_time_pp  = 0
 
 if flag_save_data == 1 and data_in_use <= 3:
-    with open('./Performance Metrics/precision_1.txt', 'w') as f:
+    with open(os.path.join(metrics_output_dir, 'precision_1.txt'), 'w') as f:
         for item in res_eval:
             prec = item["precision"]
             num_GT_paths = item["num_GT_paths"]
@@ -439,26 +444,26 @@ if flag_save_data == 1 and data_in_use <= 3:
 
 
 
-    with open('./Performance Metrics/recall.txt', 'w') as f:
+    with open(os.path.join(metrics_output_dir, 'recall.txt'), 'w') as f:
         for item in res_eval:
             rec = item["recall"]
             f.write('%f' % rec)
             f.write("\n")
             sum_rec = sum_rec + rec
 
-    with open('./Performance Metrics/TP.txt', 'w') as f:
+    with open(os.path.join(metrics_output_dir, 'TP.txt'), 'w') as f:
         for item in res_eval:
             TP = item["TP"]
             f.write('%d' % TP)
             f.write("\n")
 
-    with open('./Performance Metrics/FP.txt', 'w') as f:
+    with open(os.path.join(metrics_output_dir, 'FP.txt'), 'w') as f:
         for item in res_eval:
             FP = item["FP"]
             f.write('%d' % FP)
             f.write("\n")
 
-    with open('./Performance Metrics/FN.txt', 'w') as f:
+    with open(os.path.join(metrics_output_dir, 'FN.txt'), 'w') as f:
         for item in res_eval:
             FN = item["FN"]
             f.write('%d' % FN)
@@ -515,7 +520,7 @@ recall_path_1    = []
 
 
 if flag_single_multiple_path_evaluation == 1:
-    with open('./Performance Metrics/precision_TP_1.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'precision_TP_1.txt'), 'a') as f:
         for item in res_eval:
             prec = item["precision"]
             num_GT_paths = item["num_GT_paths"]
@@ -523,7 +528,7 @@ if flag_single_multiple_path_evaluation == 1:
                 precision_TP_1.append(prec)
                 f.write('%f' % prec)
                 f.write("\n")
-    with open('./Performance Metrics/recall_TP_1.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'recall_TP_1.txt'), 'a') as f:
         for item in res_eval:
             rec = item["recall"]
             num_GT_paths = item["num_GT_paths"]
@@ -531,7 +536,7 @@ if flag_single_multiple_path_evaluation == 1:
                 recall_TP_1.append(rec)
                 f.write('%f' % rec)
                 f.write("\n")
-    with open('./Performance Metrics/precision_all_1.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'precision_all_1.txt'), 'a') as f:
         for item in res_eval:
             prec = item["all_pixel_prec"]
             num_GT_paths = item["num_GT_paths"]
@@ -539,7 +544,7 @@ if flag_single_multiple_path_evaluation == 1:
                 precision_all_1.append(prec)
                 f.write('%f' % prec)
                 f.write("\n")
-    with open('./Performance Metrics/recall_all_1.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'recall_all_1.txt'), 'a') as f:
         for item in res_eval:
             rec = item["all_pixel_recall"]
             num_GT_paths = item["num_GT_paths"]
@@ -547,7 +552,7 @@ if flag_single_multiple_path_evaluation == 1:
                 recall_all_1.append(rec)
                 f.write('%f' % rec)
                 f.write("\n")
-    with open('./Performance Metrics/precision_path_1.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'precision_path_1.txt'), 'a') as f:
         for item in res_eval:
             prec = item["path_level_prec"]
             num_GT_paths = item["num_GT_paths"]
@@ -555,7 +560,7 @@ if flag_single_multiple_path_evaluation == 1:
                 precision_path_1.append(prec)
                 f.write('%f' % prec)
                 f.write("\n")
-    with open('./Performance Metrics/recall_path_1.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'recall_path_1.txt'), 'a') as f:
         for item in res_eval:
             rec = item["path_level_recall"]
             num_GT_paths = item["num_GT_paths"]
@@ -572,7 +577,7 @@ if flag_single_multiple_path_evaluation == 1:
     precision_path_multi = []
     recall_path_multi    = []
 
-    with open('./Performance Metrics/precision_TP_multi.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'precision_TP_multi.txt'), 'a') as f:
         for item in res_eval:
             prec = item["precision"]
             num_GT_paths = item["num_GT_paths"]
@@ -580,7 +585,7 @@ if flag_single_multiple_path_evaluation == 1:
                 precision_TP_multi.append(prec)
                 f.write('%f' % prec)
                 f.write("\n")
-    with open('./Performance Metrics/recall_TP_multi.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'recall_TP_multi.txt'), 'a') as f:
         for item in res_eval:
             rec = item["recall"]
             num_GT_paths = item["num_GT_paths"]
@@ -588,7 +593,7 @@ if flag_single_multiple_path_evaluation == 1:
                 recall_TP_multi.append(rec)
                 f.write('%f' % rec)
                 f.write("\n")
-    with open('./Performance Metrics/precision_all_multi.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'precision_all_multi.txt'), 'a') as f:
         for item in res_eval:
             prec = item["all_pixel_prec"]
             num_GT_paths = item["num_GT_paths"]
@@ -596,7 +601,7 @@ if flag_single_multiple_path_evaluation == 1:
                 precision_all_multi.append(prec)
                 f.write('%f' % prec)
                 f.write("\n")
-    with open('./Performance Metrics/recall_all_multi.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'recall_all_multi.txt'), 'a') as f:
         for item in res_eval:
             rec = item["all_pixel_recall"]
             num_GT_paths = item["num_GT_paths"]
@@ -604,7 +609,7 @@ if flag_single_multiple_path_evaluation == 1:
                 recall_all_multi.append(rec)
                 f.write('%f' % rec)
                 f.write("\n")
-    with open('./Performance Metrics/precision_path_multi.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'precision_path_multi.txt'), 'a') as f:
         for item in res_eval:
             prec = item["path_level_prec"]
             num_GT_paths = item["num_GT_paths"]
@@ -612,7 +617,7 @@ if flag_single_multiple_path_evaluation == 1:
                 precision_path_multi.append(prec)
                 f.write('%f' % prec)
                 f.write("\n")
-    with open('./Performance Metrics/recall_path_multi.txt', 'a') as f:
+    with open(os.path.join(metrics_output_dir, 'recall_path_multi.txt'), 'a') as f:
         for item in res_eval:
             rec = item["path_level_recall"]
             num_GT_paths = item["num_GT_paths"]

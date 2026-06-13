@@ -15,6 +15,32 @@ detectron2/
 data/
 docs/
 .github/
+evaluation/.idea/
+evaluation/code_TPEnet_PathExtraction/AFM/
+evaluation/code_TPEnet_PathExtraction/CEN/
+evaluation/code_TPEnet_PathExtraction/Direction_Map_4class/
+evaluation/code_TPEnet_PathExtraction/IMG/
+evaluation/code_TPEnet_PathExtraction/Performance Metrics/
+evaluation/code_TPEnet_PathExtraction/RailDB/
+evaluation/code_TPEnet_PathExtraction/RailSet/
+evaluation/code_TPEnet_PathExtraction/ReadMe.txt
+evaluation/code_TPEnet_PathExtraction/SEG/
+evaluation/code_TPEnet_PathExtraction/Theory.py
+evaluation/code_TPEnet_PathExtraction/Vis_GT_AttractionMap.py
+evaluation/code_TPEnet_PathExtraction/ablation_study.m
+evaluation/code_TPEnet_PathExtraction/centerness.fig
+evaluation/code_TPEnet_PathExtraction/my_triplet_image/
+evaluation/code_TPEnet_PathExtraction/my_triplet_json/
+evaluation/code_TPEnet_PathExtraction/net_weight/
+evaluation/code_TPEnet_PathExtraction/railsem_jsons_test_modified/
+evaluation/code_TPEnet_PathExtraction/railsem_jsons_test_modified2/
+evaluation/code_TPEnet_PathExtraction/requirements.txt
+evaluation/code_TPEnet_PathExtraction/rs19_val/
+evaluation/code_TPEnet_PathExtraction/rs19_val_modified/
+evaluation/code_TPEnet_PathExtraction/rs19_val_train/
+evaluation/code_TPEnet_PathExtraction/sample_input_imgs/
+evaluation/code_TPEnet_PathExtraction/visualize_TPE_performance_metrics.m
+../in/
 
 # Keep training scripts tracked, but ignore generated files under train_py/.
 train_py/*

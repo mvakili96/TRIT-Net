@@ -49,6 +49,52 @@ training logic, model definitions, dataset behavior, losses, metrics,
 checkpoint format, log format, or output format unless a later stage explicitly
 calls for it.
 
+## Demo / Eval Integration Status
+
+The repository now also contains a copied demo/evaluation codebase under:
+
+- `evaluation/code_TPEnet_PathExtraction/`
+
+At the current integration stage, that copied demo/eval tree is intentionally
+still independent. It has not yet been consolidated into `ptsemseg/`, and its
+duplicated model, checkpoint, preprocessing, visualization, and evaluation code
+has not yet been replaced.
+
+Current public entry points are:
+
+- Training: `python train_py/train_my_rpnet_c.py`
+- Demo/eval: `evaluation/code_TPEnet_PathExtraction/demo_TPEnet.py`
+
+Important current demo/eval runtime assumption:
+
+- `demo_TPEnet.py` is still written around relative paths such as
+  `../in/...`, `./sample_input_imgs/...`, `./net_weight/...`,
+  `./Performance Metrics/...`, and `IMG/`, `SEG/`, `CEN/`, `AFM/`.
+- In practice, this means the copied demo/eval script currently expects to be
+  run with `evaluation/code_TPEnet_PathExtraction/` as the working directory.
+- Do not move that script, change its imports, or rewrite its path handling
+  during the current documentation-only stage.
+
+Current integration status inside the copied demo/eval repo:
+
+- Stage 2 has centralized image-size defaults, input-directory defaults,
+  demo-preset paths, architecture-name mapping, camera-calibration path, and
+  checkpoint-default selection into
+  `evaluation/code_TPEnet_PathExtraction/runtime_defaults.py`.
+- A configuration-alignment step now adds `configs/demo_eval.yml` plus
+  `ptsemseg/inference/config.py`, so user-facing demo/eval runtime defaults can
+  live in YAML while the copied code keeps its current behavior.
+- This is a compatibility-only cleanup step. The demo/eval repo still runs as
+  its own copied codebase, and no model, preprocessing, checkpoint-loading,
+  metric, output-folder, or visualization behavior is intended to change.
+
+Later integration stages are expected to gradually reuse shared `ptsemseg/`
+modules, but that consolidation has not started yet.
+
+See [docs/demo_eval_runtime.md](/home/m_vakili_am/Projects/TRIT-Net/docs/demo_eval_runtime.md)
+for the current demo/eval runtime inventory and safe baseline verification
+commands.
+
 ## Data layout (current expected layout under `data/<DatasetName>/`)
 
 - `jpgs/` — RGB images
@@ -98,6 +144,28 @@ The current loader accepts checkpoints containing either `model_state` or
 train from scratch, edit that entry before launching training.
 This is one of the first settings a new user should expect to change on a new
 machine.
+
+The copied demo/eval pipeline now also has a YAML runtime config:
+
+- training config: `configs/trit_net.yml`
+- demo/eval config: `configs/demo_eval.yml`
+
+`configs/demo_eval.yml` is now the preferred home for user-configurable
+demo/eval runtime values such as:
+
+- architecture selection
+- class-count and AFM-head mode defaults
+- demo preset paths
+- input/output directories
+- metrics output directory
+- camera-calibration path
+- default checkpoint paths and architecture-specific override paths
+- dataset-specific triplet/IPM/RPG thresholds
+
+Behavior-sensitive compatibility constants still remain in Python, including
+architecture-code mappings, model-name translation, and wrapper/helper logic in
+`evaluation/code_TPEnet_PathExtraction/runtime_defaults.py` and
+`ptsemseg/inference/model_adapter.py`.
 
 ## Quick setup (recommended)
 
@@ -165,6 +233,47 @@ Then try a one-iteration smoke run with a temporary config rather than a full tr
 - Model checkpoints are saved as `Mybest_<iter>.pkl` in the current working directory
 - Checkpoints are written when `(iteration + 1) % training.checkpoint_interval == 0` and again at the final training iteration
 - If you want checkpoints somewhere else, that is not currently a config option; it would require changing the checkpoint helper or the process working directory
+
+## Source vs Local Artifacts
+
+Source-code directories include:
+
+- `train_py/`
+- `configs/`
+- `ptsemseg/`
+- `helpers_my/`
+- `docs/`
+- `evaluation/code_TPEnet_PathExtraction/` source files such as `demo_TPEnet.py`,
+  `PE_TPEnet.py`, `evaluation_utils.py`, `my_args_TPEnet.py`, `helpers/`, and
+  `my_helper/`
+
+Local data, checkpoints, generated outputs, and runtime-artifact directories
+include:
+
+- `data/`
+- `runs/`
+- `train_py/uint8/`
+- `.ruff_cache/`
+- `__pycache__/`
+- `evaluation/in/`
+- `evaluation/code_TPEnet_PathExtraction/net_weight/`
+- `evaluation/code_TPEnet_PathExtraction/camera_calib/`
+- `evaluation/code_TPEnet_PathExtraction/sample_input_imgs/`
+- `evaluation/code_TPEnet_PathExtraction/RailDB/`
+- `evaluation/code_TPEnet_PathExtraction/RailSet/`
+- `evaluation/code_TPEnet_PathExtraction/railsem_jsons_test_modified/`
+- `evaluation/code_TPEnet_PathExtraction/railsem_jsons_test_modified2/`
+- `evaluation/code_TPEnet_PathExtraction/rs19_val/`
+- `evaluation/code_TPEnet_PathExtraction/rs19_val_modified/`
+- `evaluation/code_TPEnet_PathExtraction/rs19_val_train/`
+- `evaluation/code_TPEnet_PathExtraction/IMG/`
+- `evaluation/code_TPEnet_PathExtraction/SEG/`
+- `evaluation/code_TPEnet_PathExtraction/CEN/`
+- `evaluation/code_TPEnet_PathExtraction/AFM/`
+- `evaluation/code_TPEnet_PathExtraction/Performance Metrics/`
+
+Do not delete, rename, or move those local artifact directories during the
+current integration stage unless that is requested explicitly.
 
 View logs:
 

@@ -1,0 +1,129 @@
+model:
+  architecture_code: 5
+  architecture_name: seghardnet
+  num_seg_classes: 4
+  num_channel_reg: 1
+  seg_in_pp: false
+
+runtime:
+  title_testrun_this: TEST7_RUN2_NRS_GOPRO
+  data_in_use: 0
+  dataset_for_use: 0
+  flag_miou: false
+  flag_save_img: 1
+  flag_save_data: 1
+  flag_single_multiple_path_evaluation: 1
+  operation:
+    size_img_process: {h: 544, w: 960}
+    dir_input: ./sample_input_imgs/resized_railsem
+    dir_output: ./res_imgs
+    b_save_res_imgs_as_file: false
+
+paths:
+  camera_calibration: ./camera_calib/params_cam_calib_960_540.pickle
+  metrics_output_dir: ./Performance Metrics
+  output_subdirs:
+    img: IMG
+    seg: SEG
+    cen: CEN
+    afm: AFM
+
+demo_presets:
+  TEST7_RUN2_NRS_GOPRO:
+    fname_pathlabel_gt_in: ../in/gt_label/res_pathlabel_test7_nrs2_20210824.pickle
+    format_fname_img_in: ../in/img_in/test7_run2_normal_reverse_switch_in_ori/img_in_%d.png
+    format_fname_img_out: ../out/img_res_%d.png
+    dx_valid_a: -100
+    dx_valid_b: 100
+
+dataset_defaults:
+  input_dirs:
+    0: ./sample_input_imgs/resized_railsem
+    1: ./RailSet/jpgs
+    2: ./RailDB/jpgs
+    3: ./sample_input_imgs/ydhr
+    4: ./sample_input_imgs/nyc_yt
+  algorithm_file_weight_by_dataset:
+    0: ./net_weight/Mybest_219gooo01.pkl
+    1: ./net_weight/TPEnet_a_weights_20800.pkl
+
+network_image_sizes:
+  0: {h: 540, w: 960}
+  1: {h: 540, w: 960}
+  2: {h: 540, w: 960}
+  3: {h: 540, w: 960}
+  4: {h: 544, w: 960}
+  5: {h: 544, w: 960}
+
+checkpoint:
+  override_file_weight_by_architecture:
+    TPEnet_a:
+      3:
+        1: ./net_weight/Mybest_32100.pkl
+      4:
+        1: ./net_weight/Association/CRV2ISPRS-runs/CASE-on-RailSem19/Mybest_10000.pkl
+        3: ./net_weight/Mybest_9033.pkl
+      19:
+        1: ./net_weight/Mybest_90119.pkl
+        3: ./net_weight/Mybest_90319.pkl
+    dlinknet_34:
+      any:
+        any: ./net_weight/Mybest_11000.pkl
+    erfnet:
+      any:
+        any: ./net_weight/Association/CRV2ISPRS-runs/ERFNet-on-RailSem19/Mybest_90000.pkl
+    bisenet_v2:
+      3:
+        any: ./net_weight/Mybest_10000.pkl
+      4:
+        any: ./net_weight/Association/CRV2ISPRS-runs/BiSeNet-on-RailSem19/Mybest_90000.pkl
+    segformer:
+      any:
+        any: ./net_weight/Association/CRV2ISPRS-runs/SegFormer-on-RailSem19/Mybest_90000.pkl
+    seghardnet:
+      any:
+        any: ./net_weight/Association/SegHarDNet/cur/7/Mybest_80000.pkl
+
+algorithm_defaults:
+  dataset_0:
+    b_create_imgs_res_interim: false
+    file_weight: ./net_weight/Mybest_219gooo01.pkl
+    param_triplet_nms_alpha: 0.8703703703703703
+    param_triplet_nms_beta: -220.0
+    param_triplet_nms_min: 15.0
+    param_triplet_nms_scale: 0.1
+    param_3D_ipm_camera_pitch_angle: -93.5
+    param_3D_ipm_camera_pos_wrt_ground_plane: [0.0, 0.0, 1.5]
+    param_3D_ipm_img_pixel_per_meter: 20.0
+    param_3D_ipm_img_height: 1000
+    param_3D_ipm_img_width: 400
+    param_rpg_subedge_thres_dx_3d: 10.0
+    param_rpg_subedge_thres_dy_img: 10
+    param_rpg_subedge_height_section: 5
+    param_rpg_nodeedge_thres_dist_img_for_seed: 296
+    param_rpg_nodeedge_thres_dx_3d: 25.0
+    param_rpg_nodeedge_thres_dy_img: 20
+    param_rpg_path_vertices_valid_y_min: 100.0
+    param_rpg_poly_fitting_y_max: 150.0
+    param_rpg_poly_fitting_degree: 2
+  dataset_other:
+    b_create_imgs_res_interim: false
+    file_weight: ./net_weight/TPEnet_a_weights_20800.pkl
+    param_triplet_nms_alpha: 0.5370370370370371
+    param_triplet_nms_beta: -140.0
+    param_triplet_nms_min: 5.0
+    param_triplet_nms_scale: 0.5
+    param_3D_ipm_camera_pitch_angle: -90.0
+    param_3D_ipm_camera_pos_wrt_ground_plane: [0.0, 0.0, 1.75]
+    param_3D_ipm_img_pixel_per_meter: 20.0
+    param_3D_ipm_img_height: 1000
+    param_3D_ipm_img_width: 400
+    param_rpg_subedge_thres_dx_3d: 0.5
+    param_rpg_subedge_thres_dy_img: 10
+    param_rpg_subedge_height_section: 5
+    param_rpg_nodeedge_thres_dist_img_for_seed: 96
+    param_rpg_nodeedge_thres_dx_3d: 1.0
+    param_rpg_nodeedge_thres_dy_img: 20
+    param_rpg_path_vertices_valid_y_min: 10.0
+    param_rpg_poly_fitting_y_max: 150.0
+    param_rpg_poly_fitting_degree: 2

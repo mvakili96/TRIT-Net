@@ -8,10 +8,16 @@ import time
 import cv2
 import copy
 import math
+import os
+import sys
 
 import torch.nn as nn
 
-from runtime_defaults import get_model_arch_for_code
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from ptsemseg.inference import get_demo_eval_architecture_name
 
 from helpers.models import get_model
 from helpers.utils  import my_utils_img
@@ -56,7 +62,7 @@ class PathExtraction_TPEnet:
 
 
         self.m_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model_dict = {"arch": get_model_arch_for_code(architecture)}
+        model_dict = {"arch": get_demo_eval_architecture_name(architecture)}
 
         self.m_model = get_model(model_dict, n_classes=num_seg_classes, n_channels_reg=num_channel_reg)
 
@@ -1512,5 +1518,4 @@ class PathExtraction_TPEnet:
 
 
 ########################################################################################################################
-
 
