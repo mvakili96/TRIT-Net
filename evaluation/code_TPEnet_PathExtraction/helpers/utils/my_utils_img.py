@@ -8,8 +8,16 @@ import numpy as np
 import collections
 import cv2
 import copy
+import sys
 from scipy.signal import find_peaks
-from torchvision.transforms import ToTensor
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from ptsemseg.inference import compute_demo_eval_centerness_from_leftright
+from ptsemseg.inference import convert_demo_eval_img_to_model_input
+from ptsemseg.inference import read_demo_eval_image_uint8
 
 
 
@@ -63,22 +71,15 @@ class MyUtils_Image:
         ###================================================================================================
         ### read img_raw_jpg
         ###================================================================================================
-        img_raw = cv2.imread(full_fname_img_raw_jpg)
+        img_raw_rsz_uint8 = read_demo_eval_image_uint8(full_fname_img_raw_jpg, size_img_rsz)
             # completed to set
-            #       img_raw: ndarray(H,W,C), 0 ~ 255
+            #       img_raw_rsz_uint8: ndarray(H,W,C), 0 ~ 255
 
             # Note that opencv uses BGR, that is:
             #   img_raw[:,:,0] -> B
             #   img_raw[:,:,1] -> G
             #   img_raw[:,:,2] -> R
 
-
-        ###================================================================================================
-        ### resize img
-        ###================================================================================================
-        img_raw_rsz_uint8 = cv2.resize(img_raw, (size_img_rsz['w'], size_img_rsz['h']))
-            # completed to set
-            #       img_raw_rsz_uint8
 
         ### <<debugging>>
         if 0:
@@ -122,18 +123,12 @@ class MyUtils_Image:
         :param rgb_std
         :return: img_data_fl_n_final: ndarray(C,H,W), -X.0 ~ X.0
         """
-
-        if arch == 0 or arch == 3 or arch == 4 or arch == 5:
-            img_ori_fl = img_ori_uint8.astype(np.float32) / 255.0
-            img_ori_fl_n = img_ori_fl - rgb_mean
-            img_ori_fl_n = img_ori_fl_n / rgb_std
-            img_ori_fl_n = img_ori_fl_n.transpose(2, 0, 1)
-            img_data_fl_n_final = img_ori_fl_n.astype(np.float32)
-        elif arch == 1:
-            img_data_fl_n_final = np.array(img_ori_uint8, np.float32).transpose(2, 0, 1) / 255.0 * 3.2 - 1.6
-        elif arch == 2:
-            img_data_fl_n_final = ToTensor()(img_ori_uint8)
-            img_data_fl_n_final = img_data_fl_n_final.numpy()
+        img_data_fl_n_final = convert_demo_eval_img_to_model_input(
+            img_ori_uint8,
+            arch,
+            rgb_mean=rgb_mean,
+            rgb_std=rgb_std,
+        )
 
         if arch == 0 or arch == 2 or arch == 1 or arch == 3 or arch == 4 or arch == 5:
             img_data_fl_n_final_coord = img_data_fl_n_final
@@ -883,26 +878,7 @@ class MyUtils_Image:
         ###=========================================================================================================
 
 
-        ###================================================================================================
-        ###
-        ###================================================================================================
-        res_delta = abs(res_left - res_right)
-        res_sum   = abs(res_left) + abs(res_right)
-
-
-        res_ratio = res_delta/res_sum           # close to 0: high centerness
-
-        res_ratio[np.isnan(res_ratio)] = 1.0
-        res_ratio[res_sum <= 1.0] = 1.0
-
-        res_weight = 1.0 - res_ratio
-
-
-        res_weight_b   = res_weight*255.0
-        img_res_weight = res_weight_b.astype(np.uint8)
-
-
-        return res_weight, img_res_weight
+        return compute_demo_eval_centerness_from_leftright(res_left, res_right)
     #end
 
     def find_closest_element(self,lst, target):
@@ -1252,4 +1228,3 @@ class MyUtils_Image:
 
 ########################################################################################################################
 ########################################################################################################################
-
