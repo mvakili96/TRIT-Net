@@ -10,6 +10,7 @@ from ptsemseg.inference.model_adapter import get_demo_eval_model_compatibility
 from ptsemseg.inference.model_adapter import get_demo_eval_model_compatibility_matrix
 from ptsemseg.inference.model_adapter import load_demo_eval_checkpoint
 from ptsemseg.inference.model_adapter import validate_demo_eval_architecture_config
+from ptsemseg.inference.model_wrappers import DemoEvalSegHarDNet
 from ptsemseg.inference.output_audit import compare_output_summaries
 from ptsemseg.inference.output_audit import summarize_model_outputs
 from ptsemseg.inference.output_audit import summarize_outputs
@@ -25,6 +26,7 @@ __all__ = [
     "compute_demo_eval_centerness_from_leftright",
     "convert_demo_eval_img_to_model_input",
     "decode_demo_eval_sigmoid_heatmap",
+    "DemoEvalSegHarDNet",
     "get_demo_eval_architecture_code",
     "get_demo_eval_architecture_name",
     "get_demo_eval_model_compatibility",

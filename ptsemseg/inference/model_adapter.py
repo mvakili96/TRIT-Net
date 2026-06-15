@@ -145,9 +145,9 @@ _DEMO_EVAL_MODEL_COMPATIBILITY = {
         safe_for_training_registry_construction=False,
         risk_level="high",
         recommendation=(
-            "Keep local. Checkpoint keys match the shared model for the "
-            "default config, but direct shared-model routing changes output "
-            "spatial size; a compatibility wrapper is required first."
+            "Default demo/eval mode now uses a shared-model compatibility "
+            "wrapper that preserves fixed output size. Keep copied local "
+            "implementation for unverified non-default modes."
         ),
     ),
 }

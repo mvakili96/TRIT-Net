@@ -319,7 +319,7 @@ class TransitionUp(nn.Module):
 
 
 class SegHarDNet(nn.Module):
-    def __init__(self,n_classes_seg = 19):
+    def __init__(self,n_classes_seg = 19, output_size=None):
         super().__init__()
         in_channels=64
         widths=[64, 128, 256, 512]        
@@ -343,6 +343,7 @@ class SegHarDNet(nn.Module):
         self.denseBlocksUp  = nn.ModuleList([])
         self.conv1x1_up     = nn.ModuleList([])
         self.n_classes_seg  = n_classes_seg
+        self.output_size     = output_size
     
         self.encoder = SegFormerEncoder(
             in_channels,
@@ -412,16 +413,17 @@ class SegHarDNet(nn.Module):
 
         out_centerline = self.rpnet_decoder_centerline(backbone_rpnet)
 
+        output_size = self.output_size or (size_in[2], size_in[3])
+
         if self.n_classes_seg == 4:
             out_AFM = self.rpnet_decoder_AFM(backbone_rpnet)
-            out_AFM_final = F.interpolate(out_AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
+            out_AFM_final = F.interpolate(out_AFM, size=output_size, mode="bilinear", align_corners=True)
 
-        out_seg_final = F.interpolate(out_seg, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
-        out_centerline_final = F.interpolate(out_centerline, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
+        out_seg_final = F.interpolate(out_seg, size=output_size, mode="bilinear", align_corners=True)
+        out_centerline_final = F.interpolate(out_centerline, size=output_size, mode="bilinear", align_corners=True)
         
         if self.n_classes_seg == 4:
             return out_seg_final, out_centerline_final,out_AFM_final
 
         elif self.n_classes_seg == 3:
             return out_seg_final, out_centerline_final
-
