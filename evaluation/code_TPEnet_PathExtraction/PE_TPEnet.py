@@ -26,7 +26,6 @@ from helpers.utils  import my_utils_3D
 from helpers.utils  import my_utils_RPG
 from helpers.utils  import my_utils_vis
 from scipy.signal import find_peaks
-import loss
 
 
 ########################################################################################################################
@@ -1518,4 +1517,3 @@ class PathExtraction_TPEnet:
 
 
 ########################################################################################################################
-
