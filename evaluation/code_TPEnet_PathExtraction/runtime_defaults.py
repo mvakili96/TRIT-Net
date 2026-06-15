@@ -19,14 +19,14 @@ if _REPO_ROOT not in sys.path:
 
 from ptsemseg.inference.config import get_default_demo_eval_config_path
 from ptsemseg.inference.config import load_demo_eval_config
-
-
-ARCH_TPENET_A = 0
-ARCH_DLINKNET_34 = 1
-ARCH_ERFNET = 2
-ARCH_BISENET_V2 = 3
-ARCH_SEGFORMER = 4
-ARCH_SEGHARDNET = 5
+from ptsemseg.inference.model_adapter import DEMO_EVAL_ARCH_TPENET_A as ARCH_TPENET_A
+from ptsemseg.inference.model_adapter import DEMO_EVAL_ARCH_BISENET_V2 as ARCH_BISENET_V2
+from ptsemseg.inference.model_adapter import DEMO_EVAL_ARCH_DLINKNET_34 as ARCH_DLINKNET_34
+from ptsemseg.inference.model_adapter import DEMO_EVAL_ARCH_ERFNET as ARCH_ERFNET
+from ptsemseg.inference.model_adapter import DEMO_EVAL_ARCH_SEGFORMER as ARCH_SEGFORMER
+from ptsemseg.inference.model_adapter import DEMO_EVAL_ARCH_SEGHARDNET as ARCH_SEGHARDNET
+from ptsemseg.inference.model_adapter import DEMO_EVAL_ARCHITECTURE_TO_NAME
+from ptsemseg.inference.model_adapter import get_demo_eval_architecture_name
 
 
 ARCHITECTURE_TO_IMAGE_SIZE = {
@@ -38,14 +38,7 @@ ARCHITECTURE_TO_IMAGE_SIZE = {
     ARCH_SEGHARDNET: {"h": 544, "w": 960},
 }
 
-ARCHITECTURE_TO_MODEL_ARCH = {
-    ARCH_TPENET_A: "TPEnet_a",
-    ARCH_DLINKNET_34: "dlinknet_34",
-    ARCH_ERFNET: "erfnet",
-    ARCH_BISENET_V2: "bisenet_v2",
-    ARCH_SEGFORMER: "segformer",
-    ARCH_SEGHARDNET: "seghardnet",
-}
+ARCHITECTURE_TO_MODEL_ARCH = dict(DEMO_EVAL_ARCHITECTURE_TO_NAME)
 
 DATASET_TO_INPUT_DIR = {
     0: "./sample_input_imgs/resized_railsem",
@@ -119,7 +112,7 @@ def get_default_processing_size(architecture: int) -> Dict[str, int]:
 
 
 def get_model_arch_for_code(architecture: int) -> str:
-    return ARCHITECTURE_TO_MODEL_ARCH[architecture]
+    return get_demo_eval_architecture_name(architecture)
 
 
 def get_default_input_dir(dataset_for_use: int) -> str:
