@@ -7,6 +7,14 @@ import numpy as np
 from ptsemseg.loader.visualization import (
     compute_centerness_from_leftright as compute_training_centerness_from_leftright,
 )
+from ptsemseg.loader.visualization import (
+    decode_output_centerline as decode_training_output_centerline,
+)
+
+
+def decode_demo_eval_sigmoid_heatmap(res_in):
+    """Decode demo/eval sigmoid heatmaps using the verified shared behavior."""
+    return decode_training_output_centerline(res_in)
 
 
 def compute_demo_eval_centerness_from_leftright(

@@ -25,8 +25,6 @@ evaluation/code_TPEnet_PathExtraction/RailDB/
 evaluation/code_TPEnet_PathExtraction/RailSet/
 evaluation/code_TPEnet_PathExtraction/ReadMe.txt
 evaluation/code_TPEnet_PathExtraction/SEG/
-evaluation/code_TPEnet_PathExtraction/Theory.py
-evaluation/code_TPEnet_PathExtraction/Vis_GT_AttractionMap.py
 evaluation/code_TPEnet_PathExtraction/ablation_study.m
 evaluation/code_TPEnet_PathExtraction/centerness.fig
 evaluation/code_TPEnet_PathExtraction/my_triplet_image/

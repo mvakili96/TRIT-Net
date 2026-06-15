@@ -17,6 +17,7 @@ if _REPO_ROOT not in sys.path:
 
 from ptsemseg.inference import compute_demo_eval_centerness_from_leftright
 from ptsemseg.inference import convert_demo_eval_img_to_model_input
+from ptsemseg.inference import decode_demo_eval_sigmoid_heatmap
 from ptsemseg.inference import read_demo_eval_image_uint8
 
 
@@ -354,25 +355,7 @@ class MyUtils_Image:
 
 
         elif num_channel_reg == 3:
-            res_sigmoid = torch.clamp(torch.sigmoid(res_in), min=1e-4, max=1 - 1e-4)
-
-            ###
-            res_a = res_sigmoid[0].permute(1, 2, 0)     # res_a : tensor(512, 1024, 1)
-            res_b = res_a[:, :, 0]                      # res_b : tensor(512, 1024)
-            res_c = res_b * 255.0
-            res_d = torch.clamp(res_c, min=0.0, max=255.0)
-            res_e = res_d.detach().cpu().numpy()
-
-
-            ###
-            res_out = res_b.detach().cpu().numpy()
-                # completed to set
-                #       res_out: ndarray (h,w), 0.0 ~ 1.0
-
-            ###
-            img_res_out = res_e.astype(np.uint8)
-                # completed to set
-                #       img_res_out: ndarray (h,w), uint8
+            res_out, img_res_out = decode_demo_eval_sigmoid_heatmap(res_in)
 
 
         return res_out, img_res_out
@@ -383,25 +366,7 @@ class MyUtils_Image:
     ###
     ###############################################################################################################
     def decode_output_startHM(self, res_in):
-
-        res_sigmoid = torch.clamp(torch.sigmoid(res_in), min=1e-4, max=1 - 1e-4)
-        res_a = res_sigmoid[0].permute(1, 2, 0)  # res_a : tensor(512, 1024, 1)
-        res_b = res_a[:, :, 0]  # res_b : tensor(512, 1024)
-        res_c = res_b * 255.0
-        res_d = torch.clamp(res_c, min=0.0, max=255.0)
-        res_e = res_d.detach().cpu().numpy()
-
-        ###
-        res_out = res_b.detach().cpu().numpy()
-        # completed to set
-        #       res_out: ndarray (h,w), 0.0 ~ 1.0
-
-        ###
-        img_res_out = res_e.astype(np.uint8)
-        # completed to set
-        #       img_res_out: ndarray (h,w), uint8
-
-        return res_out, img_res_out
+        return decode_demo_eval_sigmoid_heatmap(res_in)
 
 
     ###############################################################################################################
