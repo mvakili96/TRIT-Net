@@ -10,6 +10,9 @@ from ptsemseg.inference.model_adapter import get_demo_eval_model_compatibility
 from ptsemseg.inference.model_adapter import get_demo_eval_model_compatibility_matrix
 from ptsemseg.inference.model_adapter import load_demo_eval_checkpoint
 from ptsemseg.inference.model_adapter import validate_demo_eval_architecture_config
+from ptsemseg.inference.output_audit import compare_output_summaries
+from ptsemseg.inference.output_audit import summarize_model_outputs
+from ptsemseg.inference.output_audit import summarize_outputs
 from ptsemseg.inference.preprocessing import convert_demo_eval_img_to_model_input
 from ptsemseg.inference.preprocessing import read_demo_eval_image_uint8
 from ptsemseg.inference.visualization import compute_demo_eval_centerness_from_leftright
@@ -31,5 +34,8 @@ __all__ = [
     "load_demo_eval_checkpoint",
     "load_demo_eval_config",
     "read_demo_eval_image_uint8",
+    "compare_output_summaries",
+    "summarize_model_outputs",
+    "summarize_outputs",
     "validate_demo_eval_architecture_config",
 ]

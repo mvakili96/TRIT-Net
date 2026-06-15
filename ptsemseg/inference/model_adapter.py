@@ -145,8 +145,9 @@ _DEMO_EVAL_MODEL_COMPATIBILITY = {
         safe_for_training_registry_construction=False,
         risk_level="high",
         recommendation=(
-            "Keep local. This is the default demo/eval architecture and "
-            "needs real-checkpoint and one-image output comparison first."
+            "Keep local. Checkpoint keys match the shared model for the "
+            "default config, but direct shared-model routing changes output "
+            "spatial size; a compatibility wrapper is required first."
         ),
     ),
 }
