@@ -1,12 +1,5 @@
-# 2020/7/12
-# Jungwon Kang
+"""Compatibility wrapper for legacy demo/eval common types."""
 
-import enum
+from ptsemseg.evaluation.types import TYPE_path
 
-
-###
-class TYPE_path(enum.Enum):
-    EGO = 0
-    NON_EGO = 1     # NON-EGO: EGO path, but not approachable (by switch state)
-#End
-
+__all__ = ["TYPE_path"]
