@@ -1,5 +1,6 @@
 """Evaluation visualization helpers."""
 
+import cv2
 import numpy as np
 
 
@@ -40,3 +41,12 @@ def adjust_rgb_for_region(b_old_uint8, g_old_uint8, r_old_uint8, type_region=0):
     r_new_uint8 = np.uint8(r_new_int)
 
     return b_new_uint8, g_new_uint8, r_new_uint8
+
+
+def visualize_featuremap(x):
+    print(x.shape)
+    x_numpy = x.detach().cpu().numpy()
+    for i, layer in enumerate(x_numpy[0]):
+        cv2.imshow("A" + str(i), layer)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()

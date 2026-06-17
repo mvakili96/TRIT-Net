@@ -1,9 +1,5 @@
-import cv2
+"""Compatibility wrapper for legacy feature-map visualization helper."""
 
-def visualize_featuremap(x):
-    print(x.shape)
-    x_numpy = x.detach().cpu().numpy()
-    for i,layer in enumerate(x_numpy[0]):
-        cv2.imshow("A" + str(i),layer)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+from ptsemseg.evaluation.visualization import visualize_featuremap
+
+__all__ = ["visualize_featuremap"]
