@@ -20,11 +20,12 @@ if _REPO_ROOT not in sys.path:
 from ptsemseg.inference import get_demo_eval_architecture_name
 from ptsemseg.evaluation import MyUtils_3D
 from ptsemseg.evaluation import adjust_rgb_for_region
+from ptsemseg.evaluation.rail_path_graph import MyUtils_RailPathGraph
+from ptsemseg.evaluation.rail_path_graph import TYPE_path
 
 from helpers.models import get_model
 from helpers.utils  import my_utils_img
 from helpers.utils  import my_utils_net
-from helpers.utils  import my_utils_RPG
 from scipy.signal import find_peaks
 
 
@@ -57,7 +58,7 @@ class PathExtraction_TPEnet:
 
         self.m_obj_utils_img = my_utils_img.MyUtils_Image(dict_args_triplet)
         self.m_obj_utils_3D  = MyUtils_3D(dict_args_3D_ipm)
-        self.m_obj_utils_rpg = my_utils_RPG.MyUtils_RailPathGraph(dict_args_rpg)
+        self.m_obj_utils_rpg = MyUtils_RailPathGraph(dict_args_rpg)
 
 
         self.m_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -814,7 +815,7 @@ class PathExtraction_TPEnet:
         for idx_path in range(len(list_paths_final)):
             type_path_this = list_paths_final[idx_path]["type_path"]
 
-            if type_path_this is my_utils_RPG.TYPE_path.NON_EGO:
+            if type_path_this is TYPE_path.NON_EGO:
                 list_idx_path_for_drawing.append(idx_path)
             #end
         #end
@@ -823,7 +824,7 @@ class PathExtraction_TPEnet:
         for idx_path in range(len(list_paths_final)):
             type_path_this = list_paths_final[idx_path]["type_path"]
 
-            if type_path_this is my_utils_RPG.TYPE_path.EGO:
+            if type_path_this is TYPE_path.EGO:
                 list_idx_path_for_drawing.append(idx_path)
             #end
         #end
@@ -990,7 +991,7 @@ class PathExtraction_TPEnet:
                 #end
 
                 ###
-                if (b_switch_edge is True) and (type_path_this is my_utils_RPG.TYPE_path.NON_EGO):
+                if (b_switch_edge is True) and (type_path_this is TYPE_path.NON_EGO):
                     b_switch_edge_of_non_ego_path = True
                 #end
 
@@ -1207,7 +1208,7 @@ class PathExtraction_TPEnet:
                     #end
                 #end
 
-                if (b_switch_edge is True) and (type_path_this is my_utils_RPG.TYPE_path.NON_EGO):
+                if (b_switch_edge is True) and (type_path_this is TYPE_path.NON_EGO):
                     b_switch_edge_of_non_ego_path = True
                 #end
 
@@ -1237,7 +1238,7 @@ class PathExtraction_TPEnet:
                 ###
                 val_radius = 1
 
-                if type_path_this is my_utils_RPG.TYPE_path.EGO:
+                if type_path_this is TYPE_path.EGO:
                     val_radius = 3
                 #end
 
