@@ -9,10 +9,10 @@ import enum
 import copy
 import scipy
 
+from ptsemseg.evaluation import TYPE_path
 
 from helpers.utils.rail_path_graph.my_RPG_core  import TYPE_node
 from helpers.utils.rail_path_graph.my_RPG_core  import DLList_RPG
-from helpers.utils.my_common_type               import *
 
 # <to-be-added>
 #   condition: id_node_a (near) - id_node_b (far)
@@ -2927,7 +2927,6 @@ class MyUtils_RailPathGraph:
 ############################################################################################################################################################
 ############################################################################################################################################################
 ############################################################################################################################################################
-
 
 
 

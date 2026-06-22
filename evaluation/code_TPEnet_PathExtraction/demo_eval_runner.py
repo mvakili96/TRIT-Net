@@ -18,14 +18,14 @@ from runtime_defaults import get_demo_preset
 from runtime_defaults import get_metrics_output_dir
 from runtime_defaults import get_output_subdirs
 
+from ptsemseg.evaluation import MyHelper_GT
+from ptsemseg.evaluation import create_VSAObject_from_PE_results
+
 import PE_TPEnet
 import my_args_TPEnet
 import evaluation_utils
 
 from helpers.utils import my_utils_img
-from helpers.interface import my_vsaobject
-
-from my_helper import my_helper_GT
 
 
 def run_demo_eval():
@@ -54,7 +54,7 @@ def run_demo_eval():
     dx_valid_a = demo_preset["dx_valid_a"]
     dx_valid_b = demo_preset["dx_valid_b"]
     
-    obj_helper_GT = my_helper_GT.MyHelper_GT(title_testrun_this, w_img, dx_valid_a, dx_valid_b)
+    obj_helper_GT = MyHelper_GT(title_testrun_this, w_img, dx_valid_a, dx_valid_b)
     
     with open(fname_pathlabel_gt_in, 'rb') as fh:
         list_pathlabel_gt_in = pickle.load(fh)
@@ -196,7 +196,7 @@ def run_demo_eval():
         ###------------------------------------------------------------------------------------------------
         ### 3.4 create VSAObject from results
         ###------------------------------------------------------------------------------------------------
-        vsaobject_path = my_vsaobject.create_VSAObject_from_PE_results(list_res_paths)
+        vsaobject_path = create_VSAObject_from_PE_results(list_res_paths)
     
     
         ###------------------------------------------------------------------------------------------------

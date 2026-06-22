@@ -18,13 +18,13 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 from ptsemseg.inference import get_demo_eval_architecture_name
+from ptsemseg.evaluation import MyUtils_3D
+from ptsemseg.evaluation import adjust_rgb_for_region
 
 from helpers.models import get_model
 from helpers.utils  import my_utils_img
 from helpers.utils  import my_utils_net
-from helpers.utils  import my_utils_3D
 from helpers.utils  import my_utils_RPG
-from helpers.utils  import my_utils_vis
 from scipy.signal import find_peaks
 
 
@@ -56,7 +56,7 @@ class PathExtraction_TPEnet:
         self.m_obj_utils_net = my_utils_net.MyUtils_Net(dict_args_net, architecture, num_seg_classes, num_channel_reg)
 
         self.m_obj_utils_img = my_utils_img.MyUtils_Image(dict_args_triplet)
-        self.m_obj_utils_3D  = my_utils_3D.MyUtils_3D(dict_args_3D_ipm)
+        self.m_obj_utils_3D  = MyUtils_3D(dict_args_3D_ipm)
         self.m_obj_utils_rpg = my_utils_RPG.MyUtils_RailPathGraph(dict_args_rpg)
 
 
@@ -1029,7 +1029,7 @@ class PathExtraction_TPEnet:
                 ###
                 for x_img in range(x_left_img_int, x_right_img_int + 1):
                     b_old, g_old, r_old = img_bg_in[y_cen_img_int, x_img, :]
-                    b_new, g_new, r_new = my_utils_vis.adjust_rgb_for_region(b_old, g_old, r_old, type_region)
+                    b_new, g_new, r_new = adjust_rgb_for_region(b_old, g_old, r_old, type_region)
                     img_vis_res[y_cen_img_int, x_img, :] = [b_new, g_new, r_new]
                 #end
             # end

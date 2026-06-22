@@ -9,7 +9,7 @@ import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from helpers.utils.my_feature_layer_vis import visualize_featuremap
+from ptsemseg.evaluation import visualize_featuremap
 
 from torch.autograd import Variable
 from torchvision import models
@@ -1942,7 +1942,6 @@ if __name__ == '__main__':
         print(out_centerline.size())
         print("out_labelmap_leftright.size()")
         print(out_leftright.size())
-
 
 
 
