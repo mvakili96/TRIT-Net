@@ -18,14 +18,15 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 from ptsemseg.inference import get_demo_eval_architecture_name
+from ptsemseg.inference import load_demo_eval_checkpoint
 from ptsemseg.evaluation import MyUtils_3D
 from ptsemseg.evaluation import adjust_rgb_for_region
 from ptsemseg.evaluation.rail_path_graph import MyUtils_RailPathGraph
 from ptsemseg.evaluation.rail_path_graph import TYPE_path
+from runtime_defaults import get_override_weight_path
 
 from helpers.models import get_model
 from helpers.utils  import my_utils_img
-from helpers.utils  import my_utils_net
 from scipy.signal import find_peaks
 
 
@@ -54,7 +55,12 @@ class PathExtraction_TPEnet:
 
 
 
-        self.m_obj_utils_net = my_utils_net.MyUtils_Net(dict_args_net, architecture, num_seg_classes, num_channel_reg)
+        dict_args_net["file_weight"] = get_override_weight_path(
+            architecture,
+            num_seg_classes,
+            num_channel_reg,
+        )
+        self.m_fname_weights_to_be_loaded = dict_args_net["file_weight"]
 
         self.m_obj_utils_img = my_utils_img.MyUtils_Image(dict_args_triplet)
         self.m_obj_utils_3D  = MyUtils_3D(dict_args_3D_ipm)
@@ -66,7 +72,11 @@ class PathExtraction_TPEnet:
 
         self.m_model = get_model(model_dict, n_classes=num_seg_classes, n_channels_reg=num_channel_reg)
 
-        self.m_obj_utils_net.load_weights_to_model(self.m_model)
+        self.m_model = load_demo_eval_checkpoint(
+            model=self.m_model,
+            fname_weights_to_be_loaded=self.m_fname_weights_to_be_loaded,
+            arch="demo_eval_legacy",
+        )
 
         self.m_model.eval()
         self.m_model.to(self.m_device)

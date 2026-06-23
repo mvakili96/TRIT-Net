@@ -47,7 +47,6 @@ def compare_default_seghardnet_demo_outputs(
     with _temporary_sys_path(eval_root), _temporary_cwd(eval_root):
         from helpers.models import get_model as current_eval_get_model
         from helpers.models.SegHarDNet import SegHarDNet as LocalSegHarDNet
-        from helpers.utils import my_utils_net
         from helpers.utils.my_utils_img import MyUtils_Image
         from runtime_defaults import ARCH_SEGHARDNET
         from runtime_defaults import get_default_processing_size
@@ -87,7 +86,6 @@ def compare_default_seghardnet_demo_outputs(
 
         local_extractor = _build_extractor_with_patches(
             PE_TPEnet=PE_TPEnet,
-            my_utils_net=my_utils_net,
             args_alg=args_alg,
             num_seg_classes=settings["num_seg_classes"],
             num_channel_reg=settings["num_channel_reg"],
@@ -98,7 +96,6 @@ def compare_default_seghardnet_demo_outputs(
         )
         wrapper_extractor = _build_extractor_with_patches(
             PE_TPEnet=PE_TPEnet,
-            my_utils_net=my_utils_net,
             args_alg=args_alg,
             num_seg_classes=settings["num_seg_classes"],
             num_channel_reg=settings["num_channel_reg"],
@@ -152,7 +149,6 @@ def compare_default_seghardnet_demo_outputs(
 def _build_extractor_with_patches(
     *,
     PE_TPEnet,
-    my_utils_net,
     args_alg,
     num_seg_classes,
     num_channel_reg,
@@ -162,9 +158,9 @@ def _build_extractor_with_patches(
     load_checkpoint_fn,
 ):
     original_get_model = PE_TPEnet.get_model
-    original_load_checkpoint = my_utils_net.load_demo_eval_checkpoint
+    original_load_checkpoint = PE_TPEnet.load_demo_eval_checkpoint
     PE_TPEnet.get_model = get_model_fn
-    my_utils_net.load_demo_eval_checkpoint = load_checkpoint_fn
+    PE_TPEnet.load_demo_eval_checkpoint = load_checkpoint_fn
     try:
         return PE_TPEnet.PathExtraction_TPEnet(
             args_alg,
@@ -175,7 +171,7 @@ def _build_extractor_with_patches(
         )
     finally:
         PE_TPEnet.get_model = original_get_model
-        my_utils_net.load_demo_eval_checkpoint = original_load_checkpoint
+        PE_TPEnet.load_demo_eval_checkpoint = original_load_checkpoint
 
 
 def _run_one_image(extractor, img_raw: np.ndarray) -> dict[str, np.ndarray]:
