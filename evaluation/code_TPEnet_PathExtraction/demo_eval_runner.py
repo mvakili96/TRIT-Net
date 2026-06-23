@@ -20,10 +20,14 @@ from runtime_defaults import get_output_subdirs
 
 from ptsemseg.evaluation import MyHelper_GT
 from ptsemseg.evaluation import create_VSAObject_from_PE_results
+from ptsemseg.evaluation.metrics import cen_validation
+from ptsemseg.evaluation.metrics import eval_object_all_pixel_level
+from ptsemseg.evaluation.metrics import eval_object_topology
+from ptsemseg.evaluation.metrics import eval_seg_object
+from ptsemseg.evaluation.metrics import seg_validation
 
 import PE_TPEnet
 import my_args_TPEnet
-import evaluation_utils
 
 from helpers.utils import my_utils_img
 
@@ -147,11 +151,11 @@ def run_demo_eval():
     
     
         # if flag_save_data == 1:
-        #     seg_validator = evaluation_utils.seg_validation("test_seg/", my_idx, 0, PathExtractor.m_device)
+        #     seg_validator = seg_validation("test_seg/", my_idx, 0, PathExtractor.m_device)
         #     loss_seg = seg_validator.calculate_loss(model_seg_output, 8192, 0.3, weight=None, size_average=True)
         #     loss_seg_accum += loss_seg.item()
         #
-        #     cen_validator = evaluation_utils.cen_validation("test_cen/", my_idx, PathExtractor.m_device)
+        #     cen_validator = cen_validation("test_cen/", my_idx, PathExtractor.m_device)
         #     loss_cen = cen_validator.calculate_loss(model_cen_output)
         #     # loss_cen_regional = cen_validator.calculate_loss_regional(model_cen_output, seg_validator.GT_image_final)
         #     loss_cen_at_peaks = cen_validator.calculate_loss_at_peaks(model_cen_output)
@@ -257,9 +261,9 @@ def run_demo_eval():
                 if flag_miou:
                     gt_segmentation = cv2.resize(gt_segmentation, (img_raw_rsz_uint8.shape[1], img_raw_rsz_uint8.shape[0]))
     
-                    evaluator_seg = evaluation_utils.eval_seg_object(gt_segmentation, labels_seg_predicted,
-                                                                    image_height=img_raw_rsz_uint8.shape[0],
-                                                                    image_width=img_raw_rsz_uint8.shape[1])
+                    evaluator_seg = eval_seg_object(gt_segmentation, labels_seg_predicted,
+                                                    image_height=img_raw_rsz_uint8.shape[0],
+                                                    image_width=img_raw_rsz_uint8.shape[1])
     
                     if num_seg_classes == 3:
                         _,Class_0 = evaluator_seg.calculate_IoU(class_this=0)               #IoU_rail_region
@@ -284,9 +288,9 @@ def run_demo_eval():
     
             ### 3.5.1 create evaluator objects
             num_GT_paths = len(gt_final_dict_xs_img_rail_LR)
-            evaluator_topolgy = evaluation_utils.eval_object_topology(gt_final_dict_xs_img_rail_LR, list_res_paths, image_height = img_raw_rsz_uint8.shape[0], image_width = img_raw_rsz_uint8.shape[1], arch=architecture)
-    
-            # evaluator_seg = evaluation_utils.eval_seg_object(gt_segmentation, labels_seg_predicted, image_height = img_raw_rsz_uint8.shape[0], image_width = img_raw_rsz_uint8.shape[1])
+            evaluator_topolgy = eval_object_topology(gt_final_dict_xs_img_rail_LR, list_res_paths, image_height = img_raw_rsz_uint8.shape[0], image_width = img_raw_rsz_uint8.shape[1], arch=architecture)
+
+            # evaluator_seg = eval_seg_object(gt_segmentation, labels_seg_predicted, image_height = img_raw_rsz_uint8.shape[0], image_width = img_raw_rsz_uint8.shape[1])
     
             ### 3.5.2 annotate ground-truth rail area
             annotated_im, y_minimum = evaluator_topolgy.annotate_gt(final_im)
@@ -305,7 +309,7 @@ def run_demo_eval():
                 print("************************************************************************************")
     
     
-            # evaluator_all_pixel_level = evaluation_utils.eval_object_all_pixel_level(gt_final_dict_xs_img_rail_LR, list_res_paths, image_height= img_raw_rsz_uint8.shape[0], image_width=img_raw_rsz_uint8.shape[1])
+            # evaluator_all_pixel_level = eval_object_all_pixel_level(gt_final_dict_xs_img_rail_LR, list_res_paths, image_height= img_raw_rsz_uint8.shape[0], image_width=img_raw_rsz_uint8.shape[1])
             # all_pixel_prec, all_pixel_recall   = evaluator_all_pixel_level.find_matches(6, y_minimum)
     
             ### 3.5.5 show performance evaluation results on the annotated image
@@ -369,7 +373,7 @@ def run_demo_eval():
     
     
             # gt_final_dict_xs_img_rail_LR = json.load(open("railsem_jsons_test_modified2/railsem_jsons_test_modified" + str(my_idx) + ".json", 'r'))
-            # evaluator_topolgy = evaluation_utils.eval_object_topology(gt_final_dict_xs_img_rail_LR, list_res_paths, image_height = img_raw_rsz_uint8.shape[0], image_width = img_raw_rsz_uint8.shape[1], arch=architecture)
+            # evaluator_topolgy = eval_object_topology(gt_final_dict_xs_img_rail_LR, list_res_paths, image_height = img_raw_rsz_uint8.shape[0], image_width = img_raw_rsz_uint8.shape[1], arch=architecture)
             # annotated_im, y_minimum = evaluator_topolgy.annotate_gt(final_im)
     
     
