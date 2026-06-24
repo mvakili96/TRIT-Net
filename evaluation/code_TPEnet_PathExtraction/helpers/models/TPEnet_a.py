@@ -776,90 +776,6 @@ class DinkNet34_less_pool(nn.Module):
         return F.sigmoid(out)
 
 
-class DinkNet34(nn.Module):
-    def __init__(self, n_classes=19, n_channels_reg=3):
-        super(DinkNet34, self).__init__()
-
-        filters = [64, 128, 256, 512]
-        resnet = models.resnet34(pretrained=True)
-        self.n_channels_reg = n_channels_reg
-        self.firstconv = resnet.conv1
-        self.firstbn = resnet.bn1
-        self.firstrelu = resnet.relu
-        self.firstmaxpool = resnet.maxpool
-        self.encoder1 = resnet.layer1
-        self.encoder2 = resnet.layer2
-        self.encoder3 = resnet.layer3
-        self.encoder4 = resnet.layer4
-
-        self.dblock = Dblock(512)
-
-        self.decoder4 = DecoderBlock(filters[3], filters[2])
-        self.decoder3 = DecoderBlock(filters[2], filters[1])
-        self.decoder2 = DecoderBlock(filters[1], filters[0])
-        self.decoder1 = DecoderBlock(filters[0], filters[0])
-
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
-        self.finalrelu2 = nonlinearity
-        self.finalconvSeg = nn.Conv2d(32, n_classes, 3, padding=1)
-        self.finalreluSeg = nonlinearity
-
-        self.finalconvCent = nn.Conv2d(32+n_classes, 1, 1, stride=1, padding=0, bias=True)
-
-        if n_channels_reg == 3:
-            self.finalconvLR = nn.Conv2d(32+n_classes, 2, 1, stride=1, padding=0, bias=True)
-
-
-
-
-    def forward(self, x):
-        # Encoder
-        x = self.firstconv(x)
-        x = self.firstbn(x)
-        x = self.firstrelu(x)
-        x = self.firstmaxpool(x)
-        e1 = self.encoder1(x)
-        e2 = self.encoder2(e1)
-        e3 = self.encoder3(e2)
-        e4 = self.encoder4(e3)
-
-        # Center
-        e4 = self.dblock(e4)
-
-        # Decoder
-        d4 = self.decoder4(e4) + e3
-        d3 = self.decoder3(d4) + e2
-
-        decoder_out_this =  self.decoder2(d3)
-        if e1.shape[2] != decoder_out_this.shape[2] or e1.shape[3] != decoder_out_this.shape[3]:
-            decoder_out_this = F.interpolate(decoder_out_this, size=(e1.shape[2], e1.shape[3]), mode="bilinear", align_corners=True)
-            d2 = decoder_out_this + e1
-        # d2 = self.decoder2(d3) + e1
-        d1 = self.decoder1(d2)
-
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-
-        backbone   = self.finalrelu2(out)
-        outseg     = self.finalconvSeg(backbone)
-        outsegrelu = self.finalreluSeg(outseg)
-
-        backbone_dlinknet = torch.cat([backbone, outsegrelu], 1)
-
-        outcent_final = self.finalconvCent(backbone_dlinknet)
-        # outseg_final  = F.softmax(outseg)
-        outseg_final  = outseg
-
-        if self.n_channels_reg == 1:
-            return outseg_final, outcent_final
-        elif self.n_channels_reg == 3:
-            outLR_final = self.finalconvLR(backbone_dlinknet)
-            return outseg_final, outcent_final, outLR_final
-
-
 class DinkNet50(nn.Module):
     def __init__(self, num_classes=1):
         super(DinkNet50, self).__init__()
@@ -1942,7 +1858,6 @@ if __name__ == '__main__':
         print(out_centerline.size())
         print("out_labelmap_leftright.size()")
         print(out_leftright.size())
-
 
 
 

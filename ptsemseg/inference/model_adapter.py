@@ -88,13 +88,14 @@ _DEMO_EVAL_MODEL_COMPATIBILITY = {
         architecture_code=DEMO_EVAL_ARCH_DLINKNET_34,
         demo_eval_name=MODEL_DLINKNET_34,
         shared_registry_name=MODEL_DLINKNET_34,
-        local_constructor="DinkNet34(n_classes, n_channels_reg)",
-        shared_constructor="DinkNet34(n_classes_seg)",
+        local_constructor="Retired copied DinkNet34(n_classes, n_channels_reg)",
+        shared_constructor="DemoEvalDinkNet34(n_classes, n_channels_reg)",
         safe_for_training_registry_construction=False,
-        risk_level="high",
+        risk_level="low",
         recommendation=(
-            "Keep local until checkpoint keys, output tuple order, and "
-            "regression-head behavior are compared."
+            "Use the shared demo/eval compatibility wrapper. All legacy "
+            "3/4/19-class and 1/3-channel model contracts were verified "
+            "against the retired copied implementation."
         ),
     ),
     DEMO_EVAL_ARCH_ERFNET: DemoEvalModelCompatibility(

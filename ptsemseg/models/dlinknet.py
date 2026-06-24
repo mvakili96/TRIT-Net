@@ -88,12 +88,15 @@ class DecoderBlock(nn.Module):
 
 
 class DinkNet34(nn.Module):
-    def __init__(self, n_classes_seg=19):
+    def __init__(self, n_classes_seg=19, n_channels_reg=None):
         super(DinkNet34, self).__init__()
+        if n_channels_reg not in (None, 1, 3):
+            raise ValueError("n_channels_reg must be None, 1, or 3")
 
         filters = [64, 128, 256, 512]
         resnet = models.resnet34(pretrained=True)
         self.n_classes_seg = n_classes_seg
+        self.n_channels_reg = n_channels_reg
 
         self.firstconv = resnet.conv1
         self.firstbn = resnet.bn1
@@ -121,8 +124,18 @@ class DinkNet34(nn.Module):
 
         self.finalconvCent = nn.Conv2d(32 + n_classes_seg, 1, 1, stride=1, padding=0, bias=True)
 
-        if self.n_classes_seg == 4:
+        if self.n_classes_seg == 4 and self.n_channels_reg is None:
             self.finalconvAFM = MyDecoder(in_channels=32 + n_classes_seg, out_channels=1)
+
+        if self.n_channels_reg == 3:
+            self.finalconvLR = nn.Conv2d(
+                32 + n_classes_seg,
+                2,
+                1,
+                stride=1,
+                padding=0,
+                bias=True,
+            )
 
     def forward(self, x):
         size_in = x.size()
@@ -164,6 +177,14 @@ class DinkNet34(nn.Module):
         backbone_dlinknet = torch.cat([backbone, outsegrelu], 1)
 
         outcent_final = self.finalconvCent(backbone_dlinknet)
+
+        if self.n_channels_reg is not None:
+            if self.n_channels_reg == 1:
+                return outsegrelu, outcent_final
+
+            outLR_final = self.finalconvLR(backbone_dlinknet)
+            return outsegrelu, outcent_final, outLR_final
+
         outcent_final = F.interpolate(
             outcent_final, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True
         )

@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
+from ptsemseg.models.dlinknet import DinkNet34 as SharedDinkNet34
 from ptsemseg.models.SegEncode_HarDDecode import SegHarDNet as SharedSegHarDNet
 
 
 DEMO_EVAL_FIXED_OUTPUT_SIZE = (540, 960)
+
+
+class DemoEvalDinkNet34(SharedDinkNet34):
+    """Shared DinkNet34 with the copied demo/eval regression contract."""
+
+    def __init__(self, n_classes=19, n_channels_reg=1):
+        super().__init__(
+            n_classes_seg=n_classes,
+            n_channels_reg=n_channels_reg,
+        )
 
 
 class DemoEvalSegHarDNet(SharedSegHarDNet):
