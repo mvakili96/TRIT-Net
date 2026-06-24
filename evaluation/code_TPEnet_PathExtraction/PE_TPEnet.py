@@ -19,6 +19,11 @@ if _REPO_ROOT not in sys.path:
 
 from ptsemseg.inference import get_demo_eval_architecture_name
 from ptsemseg.inference import load_demo_eval_checkpoint
+from ptsemseg.inference import compute_demo_eval_centerness_from_leftright
+from ptsemseg.inference import convert_demo_eval_img_to_model_input
+from ptsemseg.inference import decode_demo_eval_leftright
+from ptsemseg.inference import decode_demo_eval_relu_heatmap
+from ptsemseg.inference import decode_demo_eval_segmap_bgr_uint8
 from ptsemseg.evaluation import MyUtils_3D
 from ptsemseg.evaluation import adjust_rgb_for_region
 from ptsemseg.evaluation.rail_path_graph import MyUtils_RailPathGraph
@@ -159,7 +164,10 @@ class PathExtraction_TPEnet:
         ###------------------------------------------------------------------------------------------------
         ### 1. input image
         ###------------------------------------------------------------------------------------------------
-        img_raw_rsz_fl_n = self.m_obj_utils_img.convert_img_ori_to_img_data(img_raw_rsz_uint8, self.architecture)
+        img_raw_rsz_fl_n = convert_demo_eval_img_to_model_input(
+            img_raw_rsz_uint8,
+            self.architecture,
+        )
 
         img_raw = np.expand_dims(img_raw_rsz_fl_n, 0)
         img_raw = torch.from_numpy(img_raw).float()
@@ -198,7 +206,7 @@ class PathExtraction_TPEnet:
         img_res_seg = None
         self.m_b_create_imgs_res_interim = True
         if self.m_b_create_imgs_res_interim is True:
-            img_res_seg = self.m_obj_utils_img.decode_segmap(labels_seg_predicted)
+            img_res_seg = decode_demo_eval_segmap_bgr_uint8(labels_seg_predicted)
 
             # cv2.imshow("Seg",img_res_seg)
             # cv2.waitKey()
@@ -210,7 +218,7 @@ class PathExtraction_TPEnet:
 
         ### decode output_centerness
         res_centerness_direct, \
-        img_res_centerness_direct = self.m_obj_utils_img.decode_output_centerness(output_centerness, num_channel_reg=num_ch_reg)
+        img_res_centerness_direct = decode_demo_eval_relu_heatmap(output_centerness)
 
         # img = img_res_centerness_direct.astype(np.float32)
 
@@ -230,7 +238,7 @@ class PathExtraction_TPEnet:
         img_res_AFM_direct = None
         if self.num_seg_classes == 4:
             res_AFM_direct, \
-            img_res_AFM_direct = self.m_obj_utils_img.decode_output_centerness(output_AFM, num_channel_reg=num_ch_reg)
+            img_res_AFM_direct = decode_demo_eval_relu_heatmap(output_AFM)
 
 
         
@@ -244,7 +252,7 @@ class PathExtraction_TPEnet:
             res_left, \
             res_right, \
             img_res_left, \
-            img_res_right = self.m_obj_utils_img.decode_output_leftright(output_leftright)
+            img_res_right = decode_demo_eval_leftright(output_leftright)
         elif num_ch_reg == 1:
             res_left  = None
             res_right = None
@@ -255,7 +263,10 @@ class PathExtraction_TPEnet:
         ###------------------------------------------------------------------------------------------------
         if num_ch_reg == 3:
             res_centerness_from_LR,\
-            img_res_centerness_from_LR = self.m_obj_utils_img.compute_centerness_from_leftright(res_left, res_right)
+            img_res_centerness_from_LR = compute_demo_eval_centerness_from_leftright(
+                res_left,
+                res_right,
+            )
 
 
         ###

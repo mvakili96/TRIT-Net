@@ -17,6 +17,9 @@ from ptsemseg.inference.output_audit import summarize_outputs
 from ptsemseg.inference.preprocessing import convert_demo_eval_img_to_model_input
 from ptsemseg.inference.preprocessing import read_demo_eval_image_uint8
 from ptsemseg.inference.visualization import compute_demo_eval_centerness_from_leftright
+from ptsemseg.inference.visualization import decode_demo_eval_leftright
+from ptsemseg.inference.visualization import decode_demo_eval_relu_heatmap
+from ptsemseg.inference.visualization import decode_demo_eval_segmap_bgr_uint8
 from ptsemseg.inference.visualization import decode_demo_eval_sigmoid_heatmap
 
 __all__ = [
@@ -25,6 +28,9 @@ __all__ = [
     "compare_state_dict_keys",
     "compute_demo_eval_centerness_from_leftright",
     "convert_demo_eval_img_to_model_input",
+    "decode_demo_eval_leftright",
+    "decode_demo_eval_relu_heatmap",
+    "decode_demo_eval_segmap_bgr_uint8",
     "decode_demo_eval_sigmoid_heatmap",
     "DemoEvalSegHarDNet",
     "get_demo_eval_architecture_code",

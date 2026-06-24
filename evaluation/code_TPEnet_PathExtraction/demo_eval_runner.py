@@ -25,11 +25,10 @@ from ptsemseg.evaluation.metrics import eval_object_all_pixel_level
 from ptsemseg.evaluation.metrics import eval_object_topology
 from ptsemseg.evaluation.metrics import eval_seg_object
 from ptsemseg.evaluation.metrics import seg_validation
+from ptsemseg.inference import read_demo_eval_image_uint8
 
 import PE_TPEnet
 import my_args_TPEnet
-
-from helpers.utils import my_utils_img
 
 
 def run_demo_eval():
@@ -99,9 +98,6 @@ def run_demo_eval():
     ###==================================================================================================================
     ### 2. init
     ###==================================================================================================================
-    obj_my_utils_img = my_utils_img.MyUtils_Image()
-    
-    
     ###==================================================================================================================
     ### 3. loop
     ###==================================================================================================================
@@ -125,7 +121,10 @@ def run_demo_eval():
         full_fname_img_ori = os.path.join(args_oper.dir_input, fname_img_in)
         print("Read Input Image from : {}".format(full_fname_img_ori))
     
-        img_raw_rsz_uint8 = obj_my_utils_img.read_img_raw_jpg_from_file(full_fname_img_ori, args_oper.size_img_process)
+        img_raw_rsz_uint8 = read_demo_eval_image_uint8(
+            full_fname_img_ori,
+            args_oper.size_img_process,
+        )
         img_raw_this = copy.deepcopy(img_raw_rsz_uint8)
         # img_raw_rsz_uint8 = cv2.rotate(img_raw_rsz_uint8, cv2.ROTATE_180)
     

@@ -21,6 +21,7 @@ import cv2
 import numpy as np
 
 from ptsemseg.inference.checkpoint_audit import load_checkpoint_state_dict
+from ptsemseg.inference.preprocessing import read_demo_eval_image_uint8
 from ptsemseg.training.weights import align_and_load_state_dict
 
 
@@ -47,7 +48,6 @@ def compare_default_seghardnet_demo_outputs(
     with _temporary_sys_path(eval_root), _temporary_cwd(eval_root):
         from helpers.models import get_model as current_eval_get_model
         from helpers.models.SegHarDNet import SegHarDNet as LocalSegHarDNet
-        from helpers.utils.my_utils_img import MyUtils_Image
         from runtime_defaults import ARCH_SEGHARDNET
         from runtime_defaults import get_default_processing_size
         from runtime_defaults import get_demo_runtime_settings
@@ -71,9 +71,8 @@ def compare_default_seghardnet_demo_outputs(
             args_alg,
         )
 
-        image_utils = MyUtils_Image()
         image_size = get_default_processing_size(ARCH_SEGHARDNET)
-        img_raw = image_utils.read_img_raw_jpg_from_file(str(selected_image_path), image_size)
+        img_raw = read_demo_eval_image_uint8(str(selected_image_path), image_size)
 
         def local_get_model(model_dict, n_classes, n_channels_reg, version=None):
             return LocalSegHarDNet(n_classes=n_classes, n_channels_reg=n_channels_reg)
