@@ -140,14 +140,14 @@ _DEMO_EVAL_MODEL_COMPATIBILITY = {
         architecture_code=DEMO_EVAL_ARCH_SEGHARDNET,
         demo_eval_name=MODEL_SEGHARDNET,
         shared_registry_name=MODEL_SEGHARDNET,
-        local_constructor="SegHarDNet(n_classes, n_channels_reg)",
-        shared_constructor="SegHarDNet(n_classes_seg)",
+        local_constructor="Retired copied SegHarDNet(n_classes, n_channels_reg)",
+        shared_constructor="DemoEvalSegHarDNet(n_classes, n_channels_reg)",
         safe_for_training_registry_construction=False,
-        risk_level="high",
+        risk_level="low",
         recommendation=(
-            "Default demo/eval mode now uses a shared-model compatibility "
-            "wrapper that preserves fixed output size. Keep copied local "
-            "implementation for unverified non-default modes."
+            "Use the shared demo/eval compatibility wrapper. All legacy "
+            "3/4/19-class and 1/3-channel model contracts were verified "
+            "against the retired copied implementation."
         ),
     ),
 }

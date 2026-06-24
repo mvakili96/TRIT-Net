@@ -9,7 +9,6 @@ from helpers.models.TPEnet_a import DinkNet34
 from helpers.models.TPEnet_a import ERFNet
 from helpers.models.TPEnet_a import Bisenet_v2
 from helpers.models.TPEnet_a import SegFormer
-from helpers.models.SegHarDNet import SegHarDNet
 from ptsemseg.inference.model_wrappers import DemoEvalSegHarDNet
 
 ########################################################################################################################
@@ -21,9 +20,6 @@ def get_model(model_dict, n_classes, n_channels_reg, version=None):
     name        = model_dict["arch"]
     param_dict  = copy.deepcopy(model_dict)
     param_dict.pop("arch")
-
-    if name == "seghardnet" and n_classes == 4 and n_channels_reg == 1:
-        return DemoEvalSegHarDNet(n_classes=n_classes, n_channels_reg=n_channels_reg, **param_dict)
 
     model       = _get_model_instance(name)
     model       = model(n_classes=n_classes, n_channels_reg = n_channels_reg, **param_dict)
@@ -45,7 +41,7 @@ def _get_model_instance(name):
             "erfnet": ERFNet,
             "bisenet_v2": Bisenet_v2,
             "segformer": SegFormer,
-            "seghardnet": SegHarDNet,
+            "seghardnet": DemoEvalSegHarDNet,
         }[name]
     except:
         raise ("Model {} not available".format(name))

@@ -319,8 +319,11 @@ class TransitionUp(nn.Module):
 
 
 class SegHarDNet(nn.Module):
-    def __init__(self,n_classes_seg = 19, output_size=None):
+    def __init__(self, n_classes_seg=19, output_size=None, n_channels_reg=None):
         super().__init__()
+        if n_channels_reg not in (None, 1, 3):
+            raise ValueError("n_channels_reg must be None, 1, or 3")
+
         in_channels=64
         widths=[64, 128, 256, 512]        
         depths=[3, 4, 6, 3]               
@@ -344,6 +347,7 @@ class SegHarDNet(nn.Module):
         self.conv1x1_up     = nn.ModuleList([])
         self.n_classes_seg  = n_classes_seg
         self.output_size     = output_size
+        self.n_channels_reg = n_channels_reg
     
         self.encoder = SegFormerEncoder(
             in_channels,
@@ -392,8 +396,18 @@ class SegHarDNet(nn.Module):
                                                   out_channels=1, kernel_size=1, stride=1,
                                                   padding=0, bias=True)
 
-        if self.n_classes_seg == 4:
+        if self.n_classes_seg == 4 or self.n_channels_reg is not None:
             self.rpnet_decoder_AFM = MyDecoder(in_channels=ch_in_rpnet_decoder_centerline, out_channels=1)
+
+        if self.n_channels_reg == 3:
+            self.rpnet_decoder_leftright = nn.Conv2d(
+                in_channels=ch_in_rpnet_decoder_centerline,
+                out_channels=2,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=True,
+            )
 
     def forward(self, x):
         size_in = x.size()
@@ -415,13 +429,28 @@ class SegHarDNet(nn.Module):
 
         output_size = self.output_size or (size_in[2], size_in[3])
 
-        if self.n_classes_seg == 4:
+        if self.n_classes_seg == 4 or self.n_channels_reg is not None:
             out_AFM = self.rpnet_decoder_AFM(backbone_rpnet)
             out_AFM_final = F.interpolate(out_AFM, size=output_size, mode="bilinear", align_corners=True)
 
+        if self.n_channels_reg == 3:
+            out_leftright = self.rpnet_decoder_leftright(backbone_rpnet)
+            out_leftright_final = F.interpolate(
+                out_leftright,
+                size=(size_in[2], size_in[3]),
+                mode="bilinear",
+                align_corners=True,
+            )
+
         out_seg_final = F.interpolate(out_seg, size=output_size, mode="bilinear", align_corners=True)
         out_centerline_final = F.interpolate(out_centerline, size=output_size, mode="bilinear", align_corners=True)
-        
+
+        if self.n_channels_reg == 3:
+            return out_seg_final, out_centerline_final, out_leftright_final
+
+        if self.n_channels_reg == 1:
+            return out_seg_final, out_centerline_final, out_AFM_final
+
         if self.n_classes_seg == 4:
             return out_seg_final, out_centerline_final,out_AFM_final
 
