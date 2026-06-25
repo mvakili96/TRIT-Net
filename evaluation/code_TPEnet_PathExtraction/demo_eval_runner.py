@@ -368,7 +368,8 @@ def run_demo_eval():
             cv2.imwrite(os.path.join(output_subdirs["img"], "resluting_image_" + str(img_idx) + ".jpg"), image_showing_evaluation_res)
             cv2.imwrite(os.path.join(output_subdirs["seg"], "resluting_image_" + str(img_idx) + ".bmp"), img_res_seg)
             cv2.imwrite(os.path.join(output_subdirs["cen"], "resluting_image_" + str(img_idx) + ".png"), img_res_centerness)
-            cv2.imwrite(os.path.join(output_subdirs["afm"], "resluting_image_" + str(img_idx) + ".png"), img_res_AFM_direct)
+            if img_res_AFM_direct is not None:
+                cv2.imwrite(os.path.join(output_subdirs["afm"], "resluting_image_" + str(img_idx) + ".png"), img_res_AFM_direct)
     
     
             # gt_final_dict_xs_img_rail_LR = json.load(open("railsem_jsons_test_modified2/railsem_jsons_test_modified" + str(my_idx) + ".json", 'r'))

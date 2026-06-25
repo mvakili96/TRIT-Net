@@ -1,7 +1,7 @@
 model:
-  architecture_code: 5
-  architecture_name: seghardnet
-  num_seg_classes: 4
+  architecture_code: 1
+  architecture_name: dlinknet_34
+  num_seg_classes: 3
   num_channel_reg: 1
   seg_in_pp: false
 
@@ -14,7 +14,7 @@ runtime:
   flag_save_data: 1
   flag_single_multiple_path_evaluation: 1
   operation:
-    size_img_process: {h: 544, w: 960}
+    size_img_process: {h: 540, w: 960}
     dir_input: ./sample_input_imgs/resized_railsem
     dir_output: ./res_imgs
     b_save_res_imgs_as_file: false
@@ -68,7 +68,7 @@ checkpoint:
         3: ./net_weight/Mybest_90319.pkl
     dlinknet_34:
       any:
-        any: ./net_weight/Mybest_11000.pkl
+        any: ./net_weight/Mybest_dlink.pkl
     erfnet:
       any:
         any: ./net_weight/Association/CRV2ISPRS-runs/ERFNet-on-RailSem19/Mybest_90000.pkl
