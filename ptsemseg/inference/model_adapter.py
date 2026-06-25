@@ -102,13 +102,14 @@ _DEMO_EVAL_MODEL_COMPATIBILITY = {
         architecture_code=DEMO_EVAL_ARCH_ERFNET,
         demo_eval_name=MODEL_ERFNET,
         shared_registry_name=MODEL_ERFNET,
-        local_constructor="ERFNet(n_classes, n_channels_reg)",
-        shared_constructor="ERFNet(n_classes_seg, n_channels_reg)",
+        local_constructor="Retired copied ERFNet(n_classes, n_channels_reg)",
+        shared_constructor="DemoEvalERFNet(n_classes, n_channels_reg)",
         safe_for_training_registry_construction=False,
-        risk_level="high",
+        risk_level="low",
         recommendation=(
-            "Keep local until decoder channel behavior, checkpoint keys, and "
-            "output tuple structure are verified."
+            "Use the shared demo/eval compatibility wrapper. The configured "
+            "four-class checkpoint and both regression modes were verified "
+            "against the retired copied implementation."
         ),
     ),
     DEMO_EVAL_ARCH_BISENET_V2: DemoEvalModelCompatibility(

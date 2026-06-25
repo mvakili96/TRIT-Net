@@ -125,10 +125,19 @@ class UpsamplerBlock(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(
+        self,
+        num_classes,
+        demo_eval_n_channels_reg=None,
+        demo_eval_output_size=(540, 960),
+    ):
         super().__init__()
+        if demo_eval_n_channels_reg not in (None, 1, 3):
+            raise ValueError("demo_eval_n_channels_reg must be None, 1, or 3")
 
         self.num_classes = num_classes
+        self.demo_eval_n_channels_reg = demo_eval_n_channels_reg
+        self.demo_eval_output_size = demo_eval_output_size
 
         self.layers = nn.ModuleList()
 
@@ -149,6 +158,16 @@ class Decoder(nn.Module):
         if num_classes == 4:
             self.finalconvAFM = MyDecoder(in_channels=16 + num_classes, out_channels=1)
 
+        if self.demo_eval_n_channels_reg == 3:
+            self.finalconvLR = nn.Conv2d(
+                16 + num_classes,
+                2,
+                1,
+                stride=1,
+                padding=0,
+                bias=True,
+            )
+
     def forward(self, input, size_in):
         output = input
 
@@ -158,6 +177,46 @@ class Decoder(nn.Module):
         backbone = output
         outseg = self.finalconvSeg(backbone)
         outsegrelu = F.relu(outseg)
+
+        if self.demo_eval_n_channels_reg is not None:
+            backbone = F.interpolate(
+                backbone,
+                size=self.demo_eval_output_size,
+                mode="bilinear",
+                align_corners=True,
+            )
+
+            if outsegrelu.shape[2:] != backbone.shape[2:]:
+                outsegrelu = F.interpolate(
+                    outsegrelu,
+                    size=self.demo_eval_output_size,
+                    mode="bilinear",
+                    align_corners=True,
+                )
+                outseg = F.interpolate(
+                    outseg,
+                    size=self.demo_eval_output_size,
+                    mode="bilinear",
+                    align_corners=True,
+                )
+
+            backbone_erfnet = torch.cat([backbone, outsegrelu], 1)
+            outcent_final = self.finalconvCent(backbone_erfnet)
+
+            # Preserve the copied decoder's unconditional AFM access.
+            out_AFM = self.finalconvAFM(backbone_erfnet)
+            out_AFM_final = F.interpolate(
+                out_AFM,
+                size=self.demo_eval_output_size,
+                mode="bilinear",
+                align_corners=True,
+            )
+
+            if self.demo_eval_n_channels_reg == 1:
+                return outseg, outcent_final, out_AFM_final
+
+            outLR_final = self.finalconvLR(backbone_erfnet)
+            return outseg, outcent_final, outLR_final
 
         backbone = F.interpolate(
             backbone, size=(outseg.size()[2], outseg.size()[3]), mode="bilinear", align_corners=True
@@ -186,11 +245,21 @@ class Decoder(nn.Module):
 
 
 class ERFNet(nn.Module):
-    def __init__(self, n_classes_seg=19, n_channels_reg=3):
+    def __init__(
+        self,
+        n_classes_seg=19,
+        n_channels_reg=3,
+        demo_eval_n_channels_reg=None,
+        demo_eval_output_size=(540, 960),
+    ):
         super().__init__()
 
         self.encoder = Encoder()
-        self.decoder = Decoder(n_classes_seg)
+        self.decoder = Decoder(
+            n_classes_seg,
+            demo_eval_n_channels_reg=demo_eval_n_channels_reg,
+            demo_eval_output_size=demo_eval_output_size,
+        )
 
     def forward(self, input, only_encode=False):
         if only_encode:

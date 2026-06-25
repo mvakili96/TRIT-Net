@@ -11,6 +11,7 @@ from ptsemseg.inference.model_adapter import get_demo_eval_model_compatibility_m
 from ptsemseg.inference.model_adapter import load_demo_eval_checkpoint
 from ptsemseg.inference.model_adapter import validate_demo_eval_architecture_config
 from ptsemseg.inference.model_wrappers import DemoEvalDinkNet34
+from ptsemseg.inference.model_wrappers import DemoEvalERFNet
 from ptsemseg.inference.model_wrappers import DemoEvalSegHarDNet
 from ptsemseg.inference.output_audit import compare_output_summaries
 from ptsemseg.inference.output_audit import summarize_model_outputs
@@ -34,6 +35,7 @@ __all__ = [
     "decode_demo_eval_segmap_bgr_uint8",
     "decode_demo_eval_sigmoid_heatmap",
     "DemoEvalDinkNet34",
+    "DemoEvalERFNet",
     "DemoEvalSegHarDNet",
     "get_demo_eval_architecture_code",
     "get_demo_eval_architecture_name",

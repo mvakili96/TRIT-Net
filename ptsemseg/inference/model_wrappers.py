@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from ptsemseg.models.dlinknet import DinkNet34 as SharedDinkNet34
+from ptsemseg.models.erfnet import ERFNet as SharedERFNet
 from ptsemseg.models.SegEncode_HarDDecode import SegHarDNet as SharedSegHarDNet
 
 
@@ -16,6 +17,17 @@ class DemoEvalDinkNet34(SharedDinkNet34):
         super().__init__(
             n_classes_seg=n_classes,
             n_channels_reg=n_channels_reg,
+        )
+
+
+class DemoEvalERFNet(SharedERFNet):
+    """Shared ERFNet with the copied demo/eval output contract."""
+
+    def __init__(self, n_classes=19, n_channels_reg=1):
+        super().__init__(
+            n_classes_seg=n_classes,
+            demo_eval_n_channels_reg=n_channels_reg,
+            demo_eval_output_size=DEMO_EVAL_FIXED_OUTPUT_SIZE,
         )
 
 
