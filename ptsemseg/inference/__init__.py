@@ -10,6 +10,9 @@ from ptsemseg.inference.model_adapter import get_demo_eval_model_compatibility
 from ptsemseg.inference.model_adapter import get_demo_eval_model_compatibility_matrix
 from ptsemseg.inference.model_adapter import load_demo_eval_checkpoint
 from ptsemseg.inference.model_adapter import validate_demo_eval_architecture_config
+from ptsemseg.inference.model_factory import get_demo_eval_model
+from ptsemseg.inference.model_factory import get_demo_eval_model_class
+from ptsemseg.inference.model_factory import get_demo_eval_model_names
 from ptsemseg.inference.model_wrappers import DemoEvalBiSeNetV2
 from ptsemseg.inference.model_wrappers import DemoEvalDinkNet34
 from ptsemseg.inference.model_wrappers import DemoEvalERFNet
@@ -47,6 +50,9 @@ __all__ = [
     "get_demo_eval_architecture_name",
     "get_demo_eval_model_compatibility",
     "get_demo_eval_model_compatibility_matrix",
+    "get_demo_eval_model",
+    "get_demo_eval_model_class",
+    "get_demo_eval_model_names",
     "get_default_demo_eval_config_path",
     "load_checkpoint_state_dict",
     "load_demo_eval_checkpoint",

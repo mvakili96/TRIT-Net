@@ -18,6 +18,7 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 from ptsemseg.inference import get_demo_eval_architecture_name
+from ptsemseg.inference import get_demo_eval_model
 from ptsemseg.inference import load_demo_eval_checkpoint
 from ptsemseg.inference import compute_demo_eval_centerness_from_leftright
 from ptsemseg.inference import convert_demo_eval_img_to_model_input
@@ -30,7 +31,6 @@ from ptsemseg.evaluation.rail_path_graph import MyUtils_RailPathGraph
 from ptsemseg.evaluation.rail_path_graph import TYPE_path
 from runtime_defaults import get_override_weight_path
 
-from helpers.models import get_model
 from helpers.utils  import my_utils_img
 from scipy.signal import find_peaks
 
@@ -75,7 +75,11 @@ class PathExtraction_TPEnet:
         self.m_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model_dict = {"arch": get_demo_eval_architecture_name(architecture)}
 
-        self.m_model = get_model(model_dict, n_classes=num_seg_classes, n_channels_reg=num_channel_reg)
+        self.m_model = get_demo_eval_model(
+            model_dict,
+            n_classes=num_seg_classes,
+            n_channels_reg=num_channel_reg,
+        )
 
         self.m_model = load_demo_eval_checkpoint(
             model=self.m_model,
