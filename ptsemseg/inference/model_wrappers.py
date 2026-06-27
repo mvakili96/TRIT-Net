@@ -6,6 +6,7 @@ from ptsemseg.models.bisenet_v2 import Bisenet_v2 as SharedBisenetV2
 from ptsemseg.models.dlinknet import DinkNet34 as SharedDinkNet34
 from ptsemseg.models.erfnet import ERFNet as SharedERFNet
 from ptsemseg.models.SegEncode_HarDDecode import SegHarDNet as SharedSegHarDNet
+from ptsemseg.models.segformer import SegFormer as SharedSegFormer
 
 
 DEMO_EVAL_FIXED_OUTPUT_SIZE = (540, 960)
@@ -44,6 +45,22 @@ class DemoEvalBiSeNetV2(SharedBisenetV2):
         super().__init__(
             n_classes_seg=n_classes,
             demo_eval_n_channels_reg=n_channels_reg,
+        )
+
+
+class DemoEvalSegFormer(SharedSegFormer):
+    """Shared SegFormer with the copied demo/eval output contract.
+
+    Successful one-channel modes keep the legacy fixed output size. The
+    three-channel left/right mode intentionally preserves the copied model's
+    current tensor-shape behavior.
+    """
+
+    def __init__(self, n_classes=19, n_channels_reg=1):
+        super().__init__(
+            n_classes_seg=n_classes,
+            demo_eval_n_channels_reg=n_channels_reg,
+            demo_eval_output_size=DEMO_EVAL_FIXED_OUTPUT_SIZE,
         )
 
 

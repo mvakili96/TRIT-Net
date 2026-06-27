@@ -131,13 +131,15 @@ _DEMO_EVAL_MODEL_COMPATIBILITY = {
         architecture_code=DEMO_EVAL_ARCH_SEGFORMER,
         demo_eval_name=MODEL_SEGFORMER,
         shared_registry_name=MODEL_SEGFORMER,
-        local_constructor="SegFormer(n_classes, n_channels_reg)",
-        shared_constructor="SegFormer(n_classes_seg)",
+        local_constructor="Retired copied SegFormer(n_classes, n_channels_reg)",
+        shared_constructor="DemoEvalSegFormer(n_classes, n_channels_reg)",
         safe_for_training_registry_construction=False,
-        risk_level="medium/high",
+        risk_level="low",
         recommendation=(
-            "Keep local until output heads, tuple order, and checkpoint keys "
-            "are compared for the configured demo/eval mode."
+            "Use the shared demo/eval compatibility wrapper. Fixed output "
+            "sizing, optional left/right behavior, and checkpoint "
+            "compatibility were verified against the retired copied "
+            "implementation."
         ),
     ),
     DEMO_EVAL_ARCH_SEGHARDNET: DemoEvalModelCompatibility(

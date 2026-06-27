@@ -235,7 +235,12 @@ class SegFormerSegmentationHead(nn.Module):
         return x_fuse,out_seg
 
 class SegFormer(nn.Module):
-    def __init__(self,n_classes_seg = 19):
+    def __init__(
+        self,
+        n_classes_seg=19,
+        demo_eval_n_channels_reg=None,
+        demo_eval_output_size=None,
+    ):
         in_channels=3
         widths=[64, 128, 256, 512]
         depths=[3, 4, 6, 3]
@@ -247,7 +252,9 @@ class SegFormer(nn.Module):
         decoder_channels=256
         scale_factors=[8, 4, 2, 1]
 
-        self.num_classes=n_classes_seg
+        self.num_classes = n_classes_seg
+        self.demo_eval_n_channels_reg = demo_eval_n_channels_reg
+        self.demo_eval_output_size = demo_eval_output_size
         drop_prob = 0.0
 
         super().__init__()
@@ -271,6 +278,16 @@ class SegFormer(nn.Module):
                                                   out_channels=1, kernel_size=1, stride=1,
                                                   padding=0, bias=True)
 
+        if demo_eval_n_channels_reg == 3:
+            self.finalconvLR = nn.Conv2d(
+                decoder_channels + self.num_classes,
+                out_channels=2,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=True,
+            )
+
         if self.num_classes == 4:
             self.rpnet_decoder_AFM = MyDecoder(in_channels=decoder_channels+self.num_classes, out_channels=1)
 
@@ -286,15 +303,33 @@ class SegFormer(nn.Module):
 
         centerline         = self.decoder_centerline(backbone_segformer)
 
+        if self.demo_eval_n_channels_reg == 3:
+            out_leftright = self.finalconvLR(backbone)
+            out_leftright_final = F.interpolate(
+                out_leftright,
+                size=(size_in[2], size_in[3]),
+                mode="bilinear",
+                align_corners=True,
+            )
+
+        output_size = self.demo_eval_output_size or (size_in[2], size_in[3])
+
         if self.num_classes == 4:
             AFM = self.rpnet_decoder_AFM(backbone_segformer)
-            AFM = F.interpolate(AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
+            AFM = F.interpolate(AFM, size=output_size, mode="bilinear", align_corners=True)
 
-        segmentation  = F.interpolate(out_seg, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
-        centerline    = F.interpolate(centerline, size=(size_in[2], size_in[3]), mode="bilinear",align_corners=True)
-        
+        segmentation  = F.interpolate(out_seg, size=output_size, mode="bilinear", align_corners=True)
+        centerline    = F.interpolate(centerline, size=output_size, mode="bilinear",align_corners=True)
+
+        if self.demo_eval_n_channels_reg == 3:
+            return segmentation, centerline, out_leftright_final
+        elif self.demo_eval_n_channels_reg == 1:
+            if self.num_classes == 4:
+                return segmentation, centerline, AFM
+            return segmentation, centerline
+
         if self.num_classes == 4:
-            return segmentation, centerline, AFM 
+            return segmentation, centerline, AFM
 
         elif self.num_classes == 3:
             return segmentation, centerline
