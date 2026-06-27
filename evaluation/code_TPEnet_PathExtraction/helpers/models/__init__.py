@@ -4,12 +4,12 @@
 import copy
 
 
-from helpers.models.TPEnet_a import TPEnet_a
 from ptsemseg.inference.model_wrappers import DemoEvalBiSeNetV2
 from ptsemseg.inference.model_wrappers import DemoEvalDinkNet34
 from ptsemseg.inference.model_wrappers import DemoEvalERFNet
 from ptsemseg.inference.model_wrappers import DemoEvalSegHarDNet
 from ptsemseg.inference.model_wrappers import DemoEvalSegFormer
+from ptsemseg.inference.model_wrappers import DemoEvalTPEnetA
 
 ########################################################################################################################
 ###
@@ -36,7 +36,7 @@ def _get_model_instance(name):
 
     try:
         return {
-            "TPEnet_a": TPEnet_a,
+            "TPEnet_a": DemoEvalTPEnetA,
             "dlinknet_34": DemoEvalDinkNet34,
             "erfnet": DemoEvalERFNet,
             "bisenet_v2": DemoEvalBiSeNetV2,

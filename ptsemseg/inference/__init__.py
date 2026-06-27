@@ -15,6 +15,7 @@ from ptsemseg.inference.model_wrappers import DemoEvalDinkNet34
 from ptsemseg.inference.model_wrappers import DemoEvalERFNet
 from ptsemseg.inference.model_wrappers import DemoEvalSegHarDNet
 from ptsemseg.inference.model_wrappers import DemoEvalSegFormer
+from ptsemseg.inference.model_wrappers import DemoEvalTPEnetA
 from ptsemseg.inference.output_audit import compare_output_summaries
 from ptsemseg.inference.output_audit import summarize_model_outputs
 from ptsemseg.inference.output_audit import summarize_outputs
@@ -41,6 +42,7 @@ __all__ = [
     "DemoEvalERFNet",
     "DemoEvalSegHarDNet",
     "DemoEvalSegFormer",
+    "DemoEvalTPEnetA",
     "get_demo_eval_architecture_code",
     "get_demo_eval_architecture_name",
     "get_demo_eval_model_compatibility",

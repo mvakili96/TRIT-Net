@@ -20,6 +20,7 @@ import torch
 from ptsemseg.models.registry import MODEL_BISENET_V2
 from ptsemseg.models.registry import MODEL_DLINKNET_34
 from ptsemseg.models.registry import MODEL_ERFNET
+from ptsemseg.models.registry import MODEL_RPNET_C
 from ptsemseg.models.registry import MODEL_SEGHARDNET
 from ptsemseg.models.registry import MODEL_SEGFORMER
 from ptsemseg.models.registry import get_registered_model_names
@@ -52,7 +53,8 @@ DEMO_EVAL_ARCHITECTURE_NAME_TO_CODE = {
 # - local copied repo expects ``n_classes`` and usually ``n_channels_reg``
 # - cleaned training ``ptsemseg.models.get_model()`` expects
 #   ``n_classes_segmentation`` and does not forward ``n_channels_reg`` generically
-# - therefore construction stays local for now, even for shared architecture names
+# - therefore construction stays in demo/eval wrappers for now, even for
+#   shared architecture names
 DEMO_EVAL_ARCHITECTURES_SAFE_FOR_TRAINING_REGISTRY_CONSTRUCTION = frozenset()
 
 
@@ -74,14 +76,15 @@ _DEMO_EVAL_MODEL_COMPATIBILITY = {
     DEMO_EVAL_ARCH_TPENET_A: DemoEvalModelCompatibility(
         architecture_code=DEMO_EVAL_ARCH_TPENET_A,
         demo_eval_name=DEMO_EVAL_LOCAL_ONLY_ARCH_NAME,
-        shared_registry_name=None,
-        local_constructor="TPEnet_a(n_classes, n_channels_reg)",
-        shared_constructor=None,
+        shared_registry_name=MODEL_RPNET_C,
+        local_constructor="Retired copied TPEnet_a(n_classes, n_channels_reg)",
+        shared_constructor="DemoEvalTPEnetA(n_classes, n_channels_reg)",
         safe_for_training_registry_construction=False,
-        risk_level="high",
+        risk_level="low",
         recommendation=(
-            "Keep local. This project-specific architecture has no proven "
-            "training-registry equivalent."
+            "Use the shared demo/eval compatibility wrapper over rpnet_c. "
+            "All legacy 3/4/19-class and 1/3-channel model contracts were "
+            "verified against the retired copied implementation."
         ),
     ),
     DEMO_EVAL_ARCH_DLINKNET_34: DemoEvalModelCompatibility(
@@ -162,8 +165,9 @@ _DEMO_EVAL_MODEL_COMPATIBILITY = {
 def get_demo_eval_architecture_name(architecture_code: int) -> str:
     """Resolve a demo/eval integer architecture code to its model name.
 
-    Shared architectures are validated against the cleaned training registry.
-    The copied repo's local-only ``TPEnet_a`` remains intentionally local.
+    Shared architecture names are validated against the cleaned training
+    registry. The legacy ``TPEnet_a`` name is kept as a demo/eval compatibility
+    alias for the shared ``rpnet_c`` implementation.
     """
     try:
         arch_name = DEMO_EVAL_ARCHITECTURE_TO_NAME[architecture_code]

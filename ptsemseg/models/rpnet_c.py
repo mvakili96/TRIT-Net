@@ -130,10 +130,11 @@ class MyUpSampling(nn.Module):
 
 
 class rpnet_c(nn.Module):
-    def __init__(self, n_classes_seg = 19):
+    def __init__(self, n_classes_seg=19, n_channels_reg=None):
         super(rpnet_c, self).__init__()
 
         self.n_classes_seg  = n_classes_seg
+        self.n_channels_reg = n_channels_reg
 
         first_ch = [16, 24, 32, 48]
         ch_list  = [64, 96, 160, 224, 320]
@@ -228,6 +229,16 @@ class rpnet_c(nn.Module):
         if self.n_classes_seg == 4:
             self.rpnet_decoder_AFM = MyDecoder(in_channels=ch_in_rpnet_decoder_centerline, out_channels=1)
 
+        if n_channels_reg == 3:
+            self.rpnet_decoder_leftright = nn.Conv2d(
+                in_channels=ch_in_rpnet_decoder_centerline,
+                out_channels=2,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=True,
+            )
+
     def forward(self, x):
         skip_connections = []
         size_in = x.size()
@@ -264,8 +275,19 @@ class rpnet_c(nn.Module):
             out_AFM = self.rpnet_decoder_AFM(backbone_rpnet)
             out_AFM_final = F.interpolate(out_AFM, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
 
+        if self.n_channels_reg == 3:
+            out_leftright = self.rpnet_decoder_leftright(backbone_rpnet)
+            out_leftright_final = F.interpolate(out_leftright, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
+
         out_seg_final = F.interpolate(out_seg, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
         out_centerline_final = F.interpolate(out_centerline, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True)
+
+        if self.n_channels_reg == 3:
+            return out_seg_final, out_centerline_final, out_leftright_final
+        elif self.n_channels_reg == 1:
+            if self.n_classes_seg == 4:
+                return out_seg_final, out_centerline_final, out_AFM_final
+            return out_seg_final, out_centerline_final
 
         if self.n_classes_seg == 4:
             return out_seg_final, out_centerline_final, out_AFM_final

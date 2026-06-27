@@ -34,8 +34,9 @@ def convert_demo_eval_img_to_model_input(
     """Convert a demo/eval image to model input format.
 
     Shared architectures reuse the cleaned training repo's conversion helper.
-    The copied repo's local-only ``TPEnet_a`` path stays local but follows the
-    same numerical behavior the copied demo/eval code already used.
+    The legacy ``TPEnet_a`` architecture name is kept as a demo/eval alias for
+    shared ``rpnet_c`` and follows the same numerical behavior as the copied
+    demo/eval code.
     """
     arch_name = get_demo_eval_architecture_name(architecture_code)
 
