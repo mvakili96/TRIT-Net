@@ -116,13 +116,15 @@ _DEMO_EVAL_MODEL_COMPATIBILITY = {
         architecture_code=DEMO_EVAL_ARCH_BISENET_V2,
         demo_eval_name=MODEL_BISENET_V2,
         shared_registry_name=MODEL_BISENET_V2,
-        local_constructor="Bisenet_v2(n_classes, n_channels_reg)",
-        shared_constructor="Bisenet_v2(n_classes_seg)",
+        local_constructor="Retired copied Bisenet_v2(n_classes, n_channels_reg)",
+        shared_constructor="DemoEvalBiSeNetV2(n_classes, n_channels_reg)",
         safe_for_training_registry_construction=False,
-        risk_level="high",
+        risk_level="low",
         recommendation=(
-            "Keep local until auxiliary-output handling and checkpoint "
-            "compatibility are proven."
+            "Use the shared demo/eval compatibility wrapper. Auxiliary-output "
+            "handling, optional left/right regression, and checkpoint "
+            "compatibility were verified against the retired copied "
+            "implementation."
         ),
     ),
     DEMO_EVAL_ARCH_SEGFORMER: DemoEvalModelCompatibility(

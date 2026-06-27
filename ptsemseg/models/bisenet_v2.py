@@ -308,9 +308,10 @@ class SegmentationHead(nn.Module):
 
 
 class Bisenet_v2(nn.Module):
-    def __init__(self, n_classes_seg=19):
+    def __init__(self, n_classes_seg=19, demo_eval_n_channels_reg=None):
         super().__init__()
         self.n_classes_seg = n_classes_seg
+        self.demo_eval_n_channels_reg = demo_eval_n_channels_reg
 
         self.detail = DetailBranch()
         self.segment = SegmentBranch()
@@ -322,6 +323,9 @@ class Bisenet_v2(nn.Module):
         self.aux5_4 = SegmentHead(128, 128, n_classes_seg, up_factor=32)
 
         self.finalconvCent = nn.Conv2d(128 + n_classes_seg, 1, 1, stride=1, padding=0, bias=True)
+
+        if demo_eval_n_channels_reg == 3:
+            self.finalconvLR = nn.Conv2d(128 + n_classes_seg, 2, 1, stride=1, padding=0, bias=True)
 
         if n_classes_seg == 4:
             self.finalconvAFM = MyDecoder(in_channels=128 + n_classes_seg, out_channels=1)
@@ -343,6 +347,12 @@ class Bisenet_v2(nn.Module):
         backbone = torch.cat([feat_head, outseg_relu], 1)
 
         out_centerline = self.finalconvCent(backbone)
+
+        if self.demo_eval_n_channels_reg == 3:
+            out_leftright = self.finalconvLR(backbone)
+            out_leftright_final = F.interpolate(
+                out_leftright, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True
+            )
 
         if self.n_classes_seg == 4:
             out_AFM = self.finalconvAFM(backbone)
@@ -370,6 +380,13 @@ class Bisenet_v2(nn.Module):
         out_centerline_final = F.interpolate(
             out_centerline, size=(size_in[2], size_in[3]), mode="bilinear", align_corners=True
         )
+
+        if self.demo_eval_n_channels_reg == 3:
+            return outseg_final, out_centerline_final, out_leftright_final
+        elif self.demo_eval_n_channels_reg == 1:
+            if self.n_classes_seg == 4:
+                return outseg_final, out_centerline_final, out_AFM_final
+            return outseg_final, out_centerline_final
 
         if self.n_classes_seg == 4:
             return (

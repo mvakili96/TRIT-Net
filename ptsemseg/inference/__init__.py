@@ -10,6 +10,7 @@ from ptsemseg.inference.model_adapter import get_demo_eval_model_compatibility
 from ptsemseg.inference.model_adapter import get_demo_eval_model_compatibility_matrix
 from ptsemseg.inference.model_adapter import load_demo_eval_checkpoint
 from ptsemseg.inference.model_adapter import validate_demo_eval_architecture_config
+from ptsemseg.inference.model_wrappers import DemoEvalBiSeNetV2
 from ptsemseg.inference.model_wrappers import DemoEvalDinkNet34
 from ptsemseg.inference.model_wrappers import DemoEvalERFNet
 from ptsemseg.inference.model_wrappers import DemoEvalSegHarDNet
@@ -34,6 +35,7 @@ __all__ = [
     "decode_demo_eval_relu_heatmap",
     "decode_demo_eval_segmap_bgr_uint8",
     "decode_demo_eval_sigmoid_heatmap",
+    "DemoEvalBiSeNetV2",
     "DemoEvalDinkNet34",
     "DemoEvalERFNet",
     "DemoEvalSegHarDNet",

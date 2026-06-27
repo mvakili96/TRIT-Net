@@ -5,8 +5,8 @@ import copy
 
 
 from helpers.models.TPEnet_a import TPEnet_a
-from helpers.models.TPEnet_a import Bisenet_v2
 from helpers.models.TPEnet_a import SegFormer
+from ptsemseg.inference.model_wrappers import DemoEvalBiSeNetV2
 from ptsemseg.inference.model_wrappers import DemoEvalDinkNet34
 from ptsemseg.inference.model_wrappers import DemoEvalERFNet
 from ptsemseg.inference.model_wrappers import DemoEvalSegHarDNet
@@ -39,7 +39,7 @@ def _get_model_instance(name):
             "TPEnet_a": TPEnet_a,
             "dlinknet_34": DemoEvalDinkNet34,
             "erfnet": DemoEvalERFNet,
-            "bisenet_v2": Bisenet_v2,
+            "bisenet_v2": DemoEvalBiSeNetV2,
             "segformer": SegFormer,
             "seghardnet": DemoEvalSegHarDNet,
         }[name]
