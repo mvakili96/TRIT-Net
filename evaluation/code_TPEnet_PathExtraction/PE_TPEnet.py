@@ -26,12 +26,12 @@ from ptsemseg.inference import decode_demo_eval_leftright
 from ptsemseg.inference import decode_demo_eval_relu_heatmap
 from ptsemseg.inference import decode_demo_eval_segmap_bgr_uint8
 from ptsemseg.evaluation import MyUtils_3D
+from ptsemseg.evaluation import MyUtils_Image
 from ptsemseg.evaluation import adjust_rgb_for_region
 from ptsemseg.evaluation.rail_path_graph import MyUtils_RailPathGraph
 from ptsemseg.evaluation.rail_path_graph import TYPE_path
 from runtime_defaults import get_override_weight_path
 
-from helpers.utils  import my_utils_img
 from scipy.signal import find_peaks
 
 
@@ -67,7 +67,7 @@ class PathExtraction_TPEnet:
         )
         self.m_fname_weights_to_be_loaded = dict_args_net["file_weight"]
 
-        self.m_obj_utils_img = my_utils_img.MyUtils_Image(dict_args_triplet)
+        self.m_obj_utils_img = MyUtils_Image(dict_args_triplet)
         self.m_obj_utils_3D  = MyUtils_3D(dict_args_3D_ipm)
         self.m_obj_utils_rpg = MyUtils_RailPathGraph(dict_args_rpg)
 
