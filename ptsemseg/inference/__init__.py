@@ -20,6 +20,7 @@ from ptsemseg.inference.model_wrappers import DemoEvalSegHarDNet
 from ptsemseg.inference.model_wrappers import DemoEvalSegFormer
 from ptsemseg.inference.model_wrappers import DemoEvalTPEnetA
 from ptsemseg.inference.output_audit import compare_output_summaries
+from ptsemseg.inference.path_extraction import PathExtraction_TPEnet
 from ptsemseg.inference.output_audit import summarize_model_outputs
 from ptsemseg.inference.output_audit import summarize_outputs
 from ptsemseg.inference.preprocessing import convert_demo_eval_img_to_model_input
@@ -57,6 +58,7 @@ __all__ = [
     "load_checkpoint_state_dict",
     "load_demo_eval_checkpoint",
     "load_demo_eval_config",
+    "PathExtraction_TPEnet",
     "read_demo_eval_image_uint8",
     "compare_output_summaries",
     "summarize_model_outputs",

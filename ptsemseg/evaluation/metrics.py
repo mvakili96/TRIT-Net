@@ -9,7 +9,6 @@ if _EVAL_ROOT not in _sys.path:
 
 import numpy as np
 import cv2
-import PE_TPEnet
 import my_args_TPEnet
 import copy
 import torch
@@ -43,7 +42,6 @@ class eval_object_topology:
         ### set values for some args
         args_alg = my_args_TPEnet.set_value_for_args_algorithm(DATASET_for_use, args_alg)
 
-        # self.PathExtractor = PE_TPEnet.PathExtraction_TPEnet(args_alg)
 
     def find_matches(self, search_area_offset, y_min):
         if self.tot_num_detected_paths == 0:

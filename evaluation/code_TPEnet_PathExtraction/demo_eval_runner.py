@@ -25,9 +25,9 @@ from ptsemseg.evaluation.metrics import eval_object_all_pixel_level
 from ptsemseg.evaluation.metrics import eval_object_topology
 from ptsemseg.evaluation.metrics import eval_seg_object
 from ptsemseg.evaluation.metrics import seg_validation
+from ptsemseg.inference import PathExtraction_TPEnet
 from ptsemseg.inference import read_demo_eval_image_uint8
 
-import PE_TPEnet
 import my_args_TPEnet
 
 
@@ -108,7 +108,7 @@ def run_demo_eval():
     
     res_eval = []
     No_GT_Class3_counter = 0
-    PathExtractor = PE_TPEnet.PathExtraction_TPEnet(args_alg, num_seg_classes, num_channel_reg, seg_in_pp, architecture)
+    PathExtractor = PathExtraction_TPEnet(args_alg, num_seg_classes, num_channel_reg, seg_in_pp, architecture)
     for my_idx,fname_img_in in enumerate(list_fnames_img):
     
         # if my_idx == 250:
