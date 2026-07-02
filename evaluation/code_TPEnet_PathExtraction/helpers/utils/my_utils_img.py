@@ -7,6 +7,8 @@ import cv2
 import copy
 from scipy.signal import find_peaks
 
+from ptsemseg.evaluation import adjust_rgb_for_region
+
 ########################################################################################################################
 ###
 ########################################################################################################################
@@ -33,66 +35,6 @@ class MyUtils_Image:
             self.m_param_triplet_nms_min   = dict_args["param_triplet_nms_min"]
             self.m_param_triplet_nms_scale = dict_args["param_triplet_nms_scale"]
         #end
-    #end
-
-
-    ###############################################################################################################
-    ###
-    ###############################################################################################################
-    def adjust_rgb(self, type, b_old_uint8, g_old_uint8, r_old_uint8):
-        """
-        adjust rgb for a pixel (for visualization)
-
-        :param type:
-        :param b_old_uint8:
-        :param g_old_uint8:
-        :param r_old_uint8:
-        :return: b_new_int, g_new_int, r_new_int
-        """
-
-        ###
-        dr_int = 0
-        dg_int = 0
-        db_int = 0
-
-        if type == 0:       # track region
-            dr_int = 0
-            dg_int = 100
-            db_int = 0
-        elif type == 1:     # left
-            dr_int = 100
-            dg_int = 0
-            db_int = 0
-        elif type == 2:     # right
-            dr_int = 0
-            dg_int = 0
-            db_int = 100
-        elif type == 3:     # center
-            dr_int = 0
-            dg_int = 200
-            db_int = 0
-        #end
-
-
-        ###
-        r_new_int = int(r_old_uint8) + dr_int
-        g_new_int = int(g_old_uint8) + dg_int
-        b_new_int = int(b_old_uint8) + db_int
-
-
-        ###
-        r_new_int = min(r_new_int, 255)
-        r_new_int = max(r_new_int, 0)
-
-        g_new_int = min(g_new_int, 255)
-        g_new_int = max(g_new_int, 0)
-
-        b_new_int = min(b_new_int, 255)
-        b_new_int = max(b_new_int, 0)
-
-
-        ###
-        return b_new_int, g_new_int, r_new_int
     #end
 
 
@@ -208,7 +150,7 @@ class MyUtils_Image:
             ### fill region
             for x_this in range(x_left, x_right + 1):
                 b_old, g_old, r_old = img_res_rgb[y_this, x_this, :]
-                b_new, g_new, r_new = self.adjust_rgb(0, b_old, g_old, r_old)
+                b_new, g_new, r_new = adjust_rgb_for_region(b_old, g_old, r_old, type_region=0)
                 img_res_rgb[y_this, x_this, :] = (b_new, g_new, r_new)
             #end
         #end
@@ -441,13 +383,6 @@ class MyUtils_Image:
     #end
 
 
-
-    def find_closest_element(self,lst, target):
-        if len(lst) == 0:
-            return target
-        else:
-            return min(lst, key=lambda x: abs(x - target))
-
     def total_variation_x(self,pairs,k=5):
         """
         Calculate the total variation in x-values based on sorted y-values.
@@ -499,7 +434,6 @@ class MyUtils_Image:
 
                     if flag_multitrack and All_paths[path_id][0]["counter_3"] > 1:
                         # set_x_peaks, _ = find_peaks(regression_img[y_], height=regression_img[y_,x_], distance=2)
-                        # x_ = self.find_closest_element(set_x_peaks, x_)
                         All_paths[path_id][0]["x_this"] = x_
                     
                     All_paths[path_id][0]["triplets"].append([x_, y_, regression_img[y_, x_]])
@@ -688,15 +622,6 @@ class MyUtils_Image:
             xyz_left_3d.reverse()
             xyz_right_3d.reverse()
 
-            # xyz_cen_3d, xyz_left_3d, xyz_right_3d= self.my_poly_fit(xyz_cen_3d, xyz_left_3d, xyz_right_3d)
-            # if degree == 1 or (degree == 2 and abs(pol[0]) < 0.001):
-            #     xyz_cen_3d = xyz_cen_3d_
-            #     xyz_left_3d = xyz_left_3d_
-            #     xyz_right_3d = xyz_right_3d_
-            # else:
-            #     pass
-
-
             list_paths_final[path_id]["extracted"]["xy_cen_img"]   = np.array(center_pixels)
             list_paths_final[path_id]["extracted"]["xy_left_img"]  = np.array(left_pixels)
             list_paths_final[path_id]["extracted"]["xy_right_img"] = np.array(right_pixels)
@@ -708,61 +633,6 @@ class MyUtils_Image:
             list_paths_final[path_id]["polynomial"]["xyz_right_3d"] = np.array(xyz_right_3d)
 
         return list_paths_final
-
-    def my_poly_fit(self, Centerline, LeftRail, RightRail):
-        Centerline.reverse()
-        LeftRail.reverse()
-        RightRail.reverse()
-
-        Centerline = np.array(Centerline,dtype=np.int32)
-        LeftRail   = np.array(LeftRail,dtype=np.int32)
-        RightRail  = np.array(RightRail,dtype=np.int32)
-
-        arr_x_cen_ori = Centerline[:, 1]
-        arr_y_cen_ori = Centerline[:, 0]
-
-        arr_x_left_ori = LeftRail[:, 1]
-        arr_y_left_ori = LeftRail[:, 0]
-
-        arr_x_right_ori = RightRail[:, 1]
-        arr_y_right_ori = RightRail[:, 0]
-
-        coeff_poly_cen = np.polyfit(abs(arr_x_cen_ori-539), arr_y_cen_ori, 2)
-        poly_this = np.poly1d(coeff_poly_cen)
-        sample_arr_x_cen_new = np.linspace(arr_x_cen_ori[-1], arr_x_cen_ori[0], arr_x_cen_ori[0] - arr_x_cen_ori[-1] + 1)
-        sample_arr_y_cen_new = poly_this(sample_arr_x_cen_new)
-        sample_arr_xyz_cen_ori_ = np.vstack((sample_arr_y_cen_new, sample_arr_x_cen_new))
-        sample_arr_xyz_cen_ori = sample_arr_xyz_cen_ori_.T
-
-        min_residuals = 1000000000
-        for param_deg_poly in range(1, 3):
-            coeff_poly_left = np.polyfit(arr_x_left_ori, arr_y_left_ori, param_deg_poly, full=True)
-            residual_this = coeff_poly_left[1][0]
-            if residual_this <= min_residuals:
-                min_residuals = residual_this
-                coeff_this = coeff_poly_left[0]
-                poly_this = np.poly1d(coeff_this)
-        sample_arr_x_left_new = np.linspace(arr_x_left_ori[-1], arr_x_left_ori[0],
-                                            arr_x_left_ori[0] - arr_x_left_ori[-1] + 1)
-        sample_arr_y_left_new = poly_this(sample_arr_x_left_new)
-        sample_arr_xyz_left_ori_ = np.vstack((sample_arr_y_left_new, sample_arr_x_left_new))
-        sample_arr_xyz_left_ori = sample_arr_xyz_left_ori_.T
-
-        min_residuals = 100000000
-        for param_deg_poly in range(1, 3):
-            coeff_poly_right = np.polyfit(arr_x_right_ori, arr_y_right_ori, param_deg_poly, full=True)
-            residual_this = coeff_poly_right[1][0]
-            if residual_this <= min_residuals:
-                min_residuals = residual_this
-                coeff_this = coeff_poly_right[0]
-                poly_this = np.poly1d(coeff_this)
-        sample_arr_x_right_new = np.linspace(arr_x_right_ori[-1], arr_x_right_ori[0],
-                                             arr_x_right_ori[0] - arr_x_right_ori[-1] + 1)
-        sample_arr_y_right_new = poly_this(sample_arr_x_right_new)
-        sample_arr_xyz_right_ori_ = np.vstack((sample_arr_y_right_new, sample_arr_x_right_new))
-        sample_arr_xyz_right_ori = sample_arr_xyz_right_ori_.T
-
-        return sample_arr_xyz_cen_ori, sample_arr_xyz_left_ori, sample_arr_xyz_right_ori
 
     def moving_average_smoothing(self,route, window_size):
         smoothed_route = []
