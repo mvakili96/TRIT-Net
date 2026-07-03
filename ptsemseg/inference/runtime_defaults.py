@@ -1,4 +1,4 @@
-"""Centralized runtime defaults for the copied demo/eval repo.
+"""Centralized runtime defaults for demo/eval inference.
 
 This module intentionally preserves the copied repo's current behavior while
 reducing duplicated hard-coded constants across the demo/eval entry points and
@@ -8,14 +8,8 @@ helpers. Paths remain relative to ``evaluation/code_TPEnet_PathExtraction/``.
 from __future__ import annotations
 
 import copy
-import os
-import sys
 from functools import lru_cache
 from typing import Dict
-
-_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
 
 from ptsemseg.inference.config import get_default_demo_eval_config_path
 from ptsemseg.inference.config import load_demo_eval_config

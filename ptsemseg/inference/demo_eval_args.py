@@ -1,24 +1,14 @@
 import argparse
-import os
 import pickle
-import sys
 
 import numpy as np
 
-
-_DEMO_EVAL_ROOT = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "evaluation", "code_TPEnet_PathExtraction")
-)
-if _DEMO_EVAL_ROOT not in sys.path:
-    sys.path.insert(0, _DEMO_EVAL_ROOT)
+from ptsemseg.inference.runtime_defaults import get_algorithm_runtime_defaults
+from ptsemseg.inference.runtime_defaults import get_camera_calibration_path
+from ptsemseg.inference.runtime_defaults import get_operation_runtime_defaults
 
 
 def _get_runtime_default_helpers():
-    """Import legacy defaults lazily to avoid a runtime_defaults/inference import cycle."""
-    from runtime_defaults import get_algorithm_runtime_defaults
-    from runtime_defaults import get_camera_calibration_path
-    from runtime_defaults import get_operation_runtime_defaults
-
     return (
         get_camera_calibration_path,
         get_algorithm_runtime_defaults,

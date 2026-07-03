@@ -13,10 +13,9 @@ import sys
 import nums_from_string
 import torch
 
-from runtime_defaults import get_demo_runtime_settings
-from runtime_defaults import get_demo_preset
-from runtime_defaults import get_metrics_output_dir
-from runtime_defaults import get_output_subdirs
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 from ptsemseg.evaluation import MyHelper_GT
 from ptsemseg.evaluation import create_VSAObject_from_PE_results
@@ -30,6 +29,10 @@ from ptsemseg.inference import read_demo_eval_image_uint8
 from ptsemseg.inference.demo_eval_args import define_args_algorithm
 from ptsemseg.inference.demo_eval_args import define_args_operation
 from ptsemseg.inference.demo_eval_args import set_value_for_args_algorithm
+from ptsemseg.inference.runtime_defaults import get_demo_preset
+from ptsemseg.inference.runtime_defaults import get_demo_runtime_settings
+from ptsemseg.inference.runtime_defaults import get_metrics_output_dir
+from ptsemseg.inference.runtime_defaults import get_output_subdirs
 
 
 def run_demo_eval():

@@ -80,7 +80,7 @@ Current integration status inside the copied demo/eval repo:
 - Stage 2 has centralized image-size defaults, input-directory defaults,
   demo-preset paths, architecture-name mapping, camera-calibration path, and
   checkpoint-default selection into
-  `evaluation/code_TPEnet_PathExtraction/runtime_defaults.py`.
+  `ptsemseg/inference/runtime_defaults.py`.
 - A configuration-alignment step now adds `configs/demo_eval.yml` plus
   `ptsemseg/inference/config.py`, so user-facing demo/eval runtime defaults can
   live in YAML while the copied code keeps its current behavior.
@@ -164,7 +164,7 @@ demo/eval runtime values such as:
 
 Behavior-sensitive compatibility constants still remain in Python, including
 architecture-code mappings, model-name translation, and wrapper/helper logic in
-`evaluation/code_TPEnet_PathExtraction/runtime_defaults.py` and
+`ptsemseg/inference/runtime_defaults.py` and
 `ptsemseg/inference/model_adapter.py`.
 
 ## Quick setup (recommended)
@@ -244,7 +244,7 @@ Source-code directories include:
 - `helpers_my/`
 - `docs/`
 - `evaluation/code_TPEnet_PathExtraction/` source files such as `demo_TPEnet.py`,
-  `demo_eval_runner.py` and `runtime_defaults.py`
+  and `demo_eval_runner.py`
 
 Local data, checkpoints, generated outputs, and runtime-artifact directories
 include:
