@@ -101,7 +101,7 @@ class PathExtraction_TPEnet:
     ###=========================================================================================================
     def arrange_args(self, args):
         """
-        See <my_args_TPEnet.py>
+        See <ptsemseg.inference.demo_eval_args>
         :param args:
         :return:
         """

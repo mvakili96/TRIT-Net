@@ -27,8 +27,9 @@ from ptsemseg.evaluation.metrics import eval_seg_object
 from ptsemseg.evaluation.metrics import seg_validation
 from ptsemseg.inference import PathExtraction_TPEnet
 from ptsemseg.inference import read_demo_eval_image_uint8
-
-import my_args_TPEnet
+from ptsemseg.inference.demo_eval_args import define_args_algorithm
+from ptsemseg.inference.demo_eval_args import define_args_operation
+from ptsemseg.inference.demo_eval_args import set_value_for_args_algorithm
 
 
 def run_demo_eval():
@@ -84,15 +85,15 @@ def run_demo_eval():
     
     ### define args
     DATASET_for_use = runtime_settings["dataset_for_use"]
-    parser_oper = my_args_TPEnet.define_args_operation(data_in_use, architecture)
-    parser_alg  = my_args_TPEnet.define_args_algorithm(DATASET_for_use, architecture)
+    parser_oper = define_args_operation(data_in_use, architecture)
+    parser_alg  = define_args_algorithm(DATASET_for_use, architecture)
     
     ### parse
     args_oper = parser_oper.parse_args()
     args_alg  = parser_alg.parse_args()
     
     ### set values for some args
-    args_alg = my_args_TPEnet.set_value_for_args_algorithm(DATASET_for_use, args_alg)
+    args_alg = set_value_for_args_algorithm(DATASET_for_use, args_alg)
     
     
     ###==================================================================================================================

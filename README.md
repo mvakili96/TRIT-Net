@@ -244,7 +244,8 @@ Source-code directories include:
 - `helpers_my/`
 - `docs/`
 - `evaluation/code_TPEnet_PathExtraction/` source files such as `demo_TPEnet.py`,
-  `demo_eval_runner.py`, `my_args_TPEnet.py`, and `runtime_defaults.py`
+  `demo_eval_runner.py`, `my_args_TPEnet.py` compatibility wrapper, and
+  `runtime_defaults.py`
 
 Local data, checkpoints, generated outputs, and runtime-artifact directories
 include:

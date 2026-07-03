@@ -9,13 +9,15 @@ if _EVAL_ROOT not in _sys.path:
 
 import numpy as np
 import cv2
-import my_args_TPEnet
 import copy
 import torch
 import json
 import torch.nn.functional as F
 import torch.nn as nn
 from scipy.signal import find_peaks
+from ptsemseg.inference.demo_eval_args import define_args_algorithm
+from ptsemseg.inference.demo_eval_args import define_args_operation
+from ptsemseg.inference.demo_eval_args import set_value_for_args_algorithm
 
 
 
@@ -33,14 +35,14 @@ class eval_object_topology:
         DATASET_for_use = 0
 
         ### define args
-        parser_oper = my_args_TPEnet.define_args_operation(DATASET_for_use, arch)
-        parser_alg = my_args_TPEnet.define_args_algorithm(DATASET_for_use, arch)
+        parser_oper = define_args_operation(DATASET_for_use, arch)
+        parser_alg = define_args_algorithm(DATASET_for_use, arch)
 
         ### parse
         args_alg = parser_alg.parse_args()
 
         ### set values for some args
-        args_alg = my_args_TPEnet.set_value_for_args_algorithm(DATASET_for_use, args_alg)
+        args_alg = set_value_for_args_algorithm(DATASET_for_use, args_alg)
 
 
     def find_matches(self, search_area_offset, y_min):
