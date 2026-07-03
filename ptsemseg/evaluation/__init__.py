@@ -3,6 +3,7 @@
 from ptsemseg.evaluation.geometry import MyIPM
 from ptsemseg.evaluation.geometry import MyUtil
 from ptsemseg.evaluation.geometry import MyUtils_3D
+from ptsemseg.evaluation.dataset_inputs import load_demo_eval_ground_truth_inputs
 from ptsemseg.evaluation.ground_truth import MyHelper_GT
 from ptsemseg.evaluation.metric_outputs import save_demo_eval_metric_outputs
 from ptsemseg.evaluation.path_extraction import MyUtils_Image
@@ -23,6 +24,7 @@ __all__ = [
     "TYPE_path",
     "adjust_rgb_for_region",
     "create_VSAObject_from_PE_results",
+    "load_demo_eval_ground_truth_inputs",
     "rectify_pixel_value",
     "save_demo_eval_metric_outputs",
     "visualize_featuremap",

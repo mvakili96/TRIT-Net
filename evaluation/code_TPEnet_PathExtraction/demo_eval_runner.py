@@ -6,7 +6,6 @@ import os
 import re
 import pickle
 import cv2
-import json
 import numpy as np
 import copy
 import sys
@@ -19,6 +18,7 @@ if _REPO_ROOT not in sys.path:
 
 from ptsemseg.evaluation import MyHelper_GT
 from ptsemseg.evaluation import create_VSAObject_from_PE_results
+from ptsemseg.evaluation import load_demo_eval_ground_truth_inputs
 from ptsemseg.evaluation import save_demo_eval_metric_outputs
 from ptsemseg.evaluation.metrics import eval_object_topology
 from ptsemseg.evaluation.metrics import eval_seg_object
@@ -212,49 +212,19 @@ def run_demo_eval():
             Class_1 = 0
             Class_2 = 0
             Class_3 = 0
-            if data_in_use == 3:
-                GT_3    = 0.1
-                dict_pathlabel_gt_this = list_pathlabel_gt_in[img_idx]
-    
-    
-                gt_idx_time_this                  = dict_pathlabel_gt_this['idx_time_this']         # sequential index (0,1,2...)
-                gt_fname_img_in_only              = dict_pathlabel_gt_this['fname_img_in_only']
-                gt_raw_dict_xs_img_rail_LR        = dict_pathlabel_gt_this['dict_rail_pnt_x_img']
-                gt_raw_dict_XYZ_pnt_in_cam_rail_L = dict_pathlabel_gt_this['dict_xyz_pnt_rail_left_in_cam']
-                gt_raw_dict_XYZ_pnt_in_cam_rail_R = dict_pathlabel_gt_this['dict_xyz_pnt_rail_right_in_cam']
-    
-                gt_final_dict_xs_img_rail_LR, \
-                gt_final_dict_XYZ_pnt_in_cam_rail_L,\
-                gt_final_dict_XYZ_pnt_in_cam_rail_R = obj_helper_GT.get_gt_final(gt_raw_dict_xs_img_rail_LR,
-                                                                                 gt_raw_dict_XYZ_pnt_in_cam_rail_L,
-                                                                                 gt_raw_dict_XYZ_pnt_in_cam_rail_R)
-    
-    
-            elif data_in_use == 2:
-                gt_final_dict_xs_img_rail_LR = json.load(open("./RailDB/test/" + f"{img_idx}" + ".json", 'r'))
-                if num_seg_classes == 3:
-                    gt_segmentation = cv2.imread("./rs19_val_modified/rs" + f"{my_idx+7000:05d}" + ".png", cv2.IMREAD_GRAYSCALE)
-                if num_seg_classes == 4:
-                    gt_segmentation = cv2.imread("./RailDB/rs19_val_link_4class+ydhr/" + f"{img_idx}" + ".png", cv2.IMREAD_GRAYSCALE)
-                # GT_3 = 0.1
-    
-    
-            elif data_in_use == 1:
-                gt_final_dict_xs_img_rail_LR = json.load(open("RailSet/test/" + str(img_idx) + ".json", 'r'))
-                if num_seg_classes == 3:
-                    gt_segmentation = cv2.imread("./rs19_val_modified/rs" + f"{my_idx+7000:05d}" + ".png", cv2.IMREAD_GRAYSCALE)
-                if num_seg_classes == 4:
-                    gt_segmentation = cv2.imread("./RailSet/rs19_val_link_4class+ydhr/" + f"{img_idx}" + ".png", cv2.IMREAD_GRAYSCALE)
-    
-            
-            elif data_in_use == 0:
-                gt_final_dict_xs_img_rail_LR = json.load(open("railsem_jsons_test_modified2/railsem_jsons_test_modified" + str(my_idx) + ".json", 'r'))
-                if num_seg_classes == 3:
-                    gt_segmentation = cv2.imread("./rs19_val_modified/rs" + f"{my_idx+7000:05d}" + ".png", cv2.IMREAD_GRAYSCALE)
-                if num_seg_classes == 4:
-                    gt_segmentation = cv2.imread("./Direction_Map_4class/rs" + f"{my_idx+7000:05d}" + ".png", cv2.IMREAD_GRAYSCALE)
-                if num_seg_classes == 19:
-                    gt_segmentation = cv2.imread("./rs19_val/rs" + f"{my_idx + 7000:05d}" + ".png", cv2.IMREAD_GRAYSCALE)
+            ground_truth_inputs = load_demo_eval_ground_truth_inputs(
+                data_in_use=data_in_use,
+                num_seg_classes=num_seg_classes,
+                my_idx=my_idx,
+                img_idx=img_idx,
+                list_pathlabel_gt_in=list_pathlabel_gt_in,
+                obj_helper_GT=obj_helper_GT,
+            )
+            gt_final_dict_xs_img_rail_LR = ground_truth_inputs["gt_final_dict_xs_img_rail_LR"]
+            if ground_truth_inputs["gt_segmentation"] is not None:
+                gt_segmentation = ground_truth_inputs["gt_segmentation"]
+            if ground_truth_inputs["GT_3"] is not None:
+                GT_3 = ground_truth_inputs["GT_3"]
     
     
             if data_in_use <= 2:
