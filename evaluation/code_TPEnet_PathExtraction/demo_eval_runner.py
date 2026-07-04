@@ -18,10 +18,10 @@ if _REPO_ROOT not in sys.path:
 
 from ptsemseg.evaluation import MyHelper_GT
 from ptsemseg.evaluation import create_VSAObject_from_PE_results
+from ptsemseg.evaluation import evaluate_demo_eval_image
 from ptsemseg.evaluation import load_demo_eval_ground_truth_inputs
 from ptsemseg.evaluation import save_demo_eval_metric_outputs
 from ptsemseg.evaluation import save_demo_eval_result_images
-from ptsemseg.evaluation.metrics import eval_object_topology
 from ptsemseg.evaluation.metrics import eval_seg_object
 from ptsemseg.inference import PathExtraction_TPEnet
 from ptsemseg.inference import read_demo_eval_image_uint8
@@ -257,74 +257,23 @@ def run_demo_eval():
                     GT_3 = 0.1
     
     
-            ### 3.5.1 create evaluator objects
-            num_GT_paths = len(gt_final_dict_xs_img_rail_LR)
-            evaluator_topolgy = eval_object_topology(gt_final_dict_xs_img_rail_LR, list_res_paths, image_height = img_raw_rsz_uint8.shape[0], image_width = img_raw_rsz_uint8.shape[1], arch=architecture)
-
-            # evaluator_seg = eval_seg_object(gt_segmentation, labels_seg_predicted, image_height = img_raw_rsz_uint8.shape[0], image_width = img_raw_rsz_uint8.shape[1])
-    
-            ### 3.5.2 annotate ground-truth rail area
-            annotated_im, y_minimum = evaluator_topolgy.annotate_gt(final_im)
-    
-            ### 3.5.3 find correspondences between ground-truth and detected rail
-            matching_mat, matched_ones = evaluator_topolgy.find_matches(4, y_minimum)
-    
-            ### 3.5.4 find true positives, false positives, and false negatives
-            TP,FP,FN = evaluator_topolgy.performance_metrics_values_TP_level(matching_mat,matched_ones)
-            path_level_prec, path_level_recall = evaluator_topolgy.performance_metrics_values_path_level(matched_ones, min_rate=0)
-            all_pixel_prec, all_pixel_recall = evaluator_topolgy.performance_metrics_values_all_pixel_level(matching_mat,matched_ones)
-    
-            if TP == 0 or y_minimum == -1:
-                print("************************************************************************************")
-                print(my_idx)
-                print("************************************************************************************")
-    
-    
-            # evaluator_all_pixel_level = eval_object_all_pixel_level(gt_final_dict_xs_img_rail_LR, list_res_paths, image_height= img_raw_rsz_uint8.shape[0], image_width=img_raw_rsz_uint8.shape[1])
-            # all_pixel_prec, all_pixel_recall   = evaluator_all_pixel_level.find_matches(6, y_minimum)
-    
-            ### 3.5.5 show performance evaluation results on the annotated image
-            image_showing_evaluation_res = evaluator_topolgy.create_final_result_on_annotated_image_V2(annotated_im, matching_mat, matched_ones)
-            # image_showing_evaluation_res = evaluator_topolgy.create_final_result_on_annotated_image_V1(final_im, matched_ones)
-            # image_showing_evaluation_res = evaluator_topolgy.create_final_result_on_annotated_image_V0(final_im)
-    
-            # image_showing_evaluation_res = cv2.putText(image_showing_evaluation_res, 'Image index: %d' % img_idx, (400, 25),
-            #                                            cv2.FONT_HERSHEY_SIMPLEX,
-            #                                            0.75, (255, 0, 0), 1, cv2.LINE_AA)
-    
-            ### 3.5.6 measure segmentation IoU
-            # if num_seg_classes == 3:
-            #     IoU_rail_region = evaluator_seg.calculate_IoU(class_this=0)
-            #     IoU_rail        = evaluator_seg.calculate_IoU(class_this=1)
-            #     IoU_background  = evaluator_seg.calculate_IoU(class_this=2)
-            #
-            # if num_seg_classes == 19:
-            #     IoU_rail_region = evaluator_seg.calculate_IoU(class_this=12)
-            #     IoU_rail        = evaluator_seg.calculate_IoU(class_this=17)
-            #     IoU_background  = evaluator_seg.calculate_IoU(class_this=3)
-    
-            if (TP+FP) > 0:
-                # image_showing_evaluation_res = cv2.putText(image_showing_evaluation_res, 'TP Pixel-level Precision: %f' % (TP/(TP+FP)), (300, 25), cv2.FONT_HERSHEY_SIMPLEX,
-                #                           0.75, (0, 0, 255), 1, cv2.LINE_AA)
-                # image_showing_evaluation_res = cv2.putText(image_showing_evaluation_res, 'TP Pixel-level Recall: %f' % (TP/(TP+FN)), (300, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                #                           0.75, (0, 0, 255), 1, cv2.LINE_AA)
-                res_eval.append(
-                    {"id": img_idx, "num_GT_paths": num_GT_paths, "TP": TP, "FP": FP, "FN": FN, "precision": (TP / (TP + FP)), "recall": (TP / (TP + FN)),
-                     "Class_0": Class_0, "Class_1": Class_1, "Class_2": Class_2, "Class_3": Class_3, "GT_3": GT_3,
-                     "path_level_prec": path_level_prec, "path_level_recall": path_level_recall,
-                     "all_pixel_prec": all_pixel_prec, "all_pixel_recall": all_pixel_recall,
-                     "time_net": dict_res_time["dtime_ab"], "time_pp": dict_res_time["dtime_bc"]})
-            else:
-                # image_showing_evaluation_res = cv2.putText(image_showing_evaluation_res, 'Precision: %f' % 0, (400, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                #                           0.75, (255, 0, 0), 1, cv2.LINE_AA)
-                # image_showing_evaluation_res = cv2.putText(image_showing_evaluation_res, 'Recall: %f' % 0, (400, 75), cv2.FONT_HERSHEY_SIMPLEX,
-                #                           0.75, (255, 0, 0), 1, cv2.LINE_AA)
-                res_eval.append(
-                    {"id": img_idx, "num_GT_paths": num_GT_paths, "TP": TP, "FP": FP, "FN": FN, "precision": 0, "recall": 0,
-                     "Class_0": Class_0, "Class_1": Class_1, "Class_2": Class_2, "Class_3": Class_3, "GT_3": GT_3,
-                     "path_level_prec": path_level_prec, "path_level_recall": path_level_recall,
-                     "all_pixel_prec": all_pixel_prec, "all_pixel_recall": all_pixel_recall,
-                     "time_net": dict_res_time["dtime_ab"], "time_pp": dict_res_time["dtime_bc"]})
+            image_showing_evaluation_res, metric_record = evaluate_demo_eval_image(
+                gt_final_dict_xs_img_rail_LR=gt_final_dict_xs_img_rail_LR,
+                list_res_paths=list_res_paths,
+                final_im=final_im,
+                image_height=img_raw_rsz_uint8.shape[0],
+                image_width=img_raw_rsz_uint8.shape[1],
+                architecture=architecture,
+                my_idx=my_idx,
+                img_idx=img_idx,
+                class_0=Class_0,
+                class_1=Class_1,
+                class_2=Class_2,
+                class_3=Class_3,
+                gt_3=GT_3,
+                dict_res_time=dict_res_time,
+            )
+            res_eval.append(metric_record)
         else:
             # pass
             image_showing_evaluation_res = PathExtractor.show_final_path_on_ori_noGTdata(img_raw_rsz_uint8,list_res_paths)
