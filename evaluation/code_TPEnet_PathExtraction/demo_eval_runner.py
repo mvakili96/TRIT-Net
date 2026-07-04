@@ -3,7 +3,6 @@
 
 
 import os
-import re
 import cv2
 import numpy as np
 import copy
@@ -21,8 +20,8 @@ from ptsemseg.evaluation import evaluate_demo_eval_image
 from ptsemseg.evaluation import load_demo_eval_ground_truth_inputs
 from ptsemseg.evaluation import save_demo_eval_metric_outputs
 from ptsemseg.evaluation import save_demo_eval_result_images
-from ptsemseg.inference import PathExtraction_TPEnet
 from ptsemseg.inference import read_demo_eval_image_uint8
+from ptsemseg.inference.demo_eval_execution import initialize_demo_eval_execution
 from ptsemseg.inference.demo_eval_runtime import initialize_demo_eval_runtime
 
 
@@ -75,13 +74,19 @@ def run_demo_eval():
     ###==================================================================================================================
     ### 3. loop
     ###==================================================================================================================
-    print("Process all image inside : {}".format(args_oper.dir_input))
-    
-    list_fnames_img = os.listdir(args_oper.dir_input)
-    list_fnames_img.sort(key=lambda f: int(re.sub(r'\D', '', f)))
+    execution_context = initialize_demo_eval_execution(
+        args_oper=args_oper,
+        args_alg=args_alg,
+        num_seg_classes=num_seg_classes,
+        num_channel_reg=num_channel_reg,
+        seg_in_pp=seg_in_pp,
+        architecture=architecture,
+    )
+
+    list_fnames_img = execution_context.list_fnames_img
     
     res_eval = []
-    PathExtractor = PathExtraction_TPEnet(args_alg, num_seg_classes, num_channel_reg, seg_in_pp, architecture)
+    PathExtractor = execution_context.path_extractor
     for my_idx,fname_img_in in enumerate(list_fnames_img):
     
         # if my_idx == 250:
