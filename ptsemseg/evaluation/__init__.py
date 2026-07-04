@@ -9,6 +9,7 @@ from ptsemseg.evaluation.image_evaluation import evaluate_demo_eval_image
 from ptsemseg.evaluation.metric_outputs import save_demo_eval_metric_outputs
 from ptsemseg.evaluation.path_extraction import MyUtils_Image
 from ptsemseg.evaluation.result_outputs import save_demo_eval_result_images
+from ptsemseg.evaluation.segmentation_iou import calculate_demo_eval_segmentation_iou
 from ptsemseg.evaluation.types import TYPE_path
 from ptsemseg.evaluation.visualization import adjust_rgb_for_region
 from ptsemseg.evaluation.visualization import rectify_pixel_value
@@ -25,6 +26,7 @@ __all__ = [
     "Polygon_dummy",
     "TYPE_path",
     "adjust_rgb_for_region",
+    "calculate_demo_eval_segmentation_iou",
     "create_VSAObject_from_PE_results",
     "evaluate_demo_eval_image",
     "load_demo_eval_ground_truth_inputs",

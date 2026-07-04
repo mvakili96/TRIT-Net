@@ -17,12 +17,12 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 from ptsemseg.evaluation import MyHelper_GT
+from ptsemseg.evaluation import calculate_demo_eval_segmentation_iou
 from ptsemseg.evaluation import create_VSAObject_from_PE_results
 from ptsemseg.evaluation import evaluate_demo_eval_image
 from ptsemseg.evaluation import load_demo_eval_ground_truth_inputs
 from ptsemseg.evaluation import save_demo_eval_metric_outputs
 from ptsemseg.evaluation import save_demo_eval_result_images
-from ptsemseg.evaluation.metrics import eval_seg_object
 from ptsemseg.inference import PathExtraction_TPEnet
 from ptsemseg.inference import read_demo_eval_image_uint8
 from ptsemseg.inference.demo_eval_args import define_args_algorithm
@@ -222,39 +222,29 @@ def run_demo_eval():
                 obj_helper_GT=obj_helper_GT,
             )
             gt_final_dict_xs_img_rail_LR = ground_truth_inputs["gt_final_dict_xs_img_rail_LR"]
-            if ground_truth_inputs["gt_segmentation"] is not None:
-                gt_segmentation = ground_truth_inputs["gt_segmentation"]
-            if ground_truth_inputs["GT_3"] is not None:
-                GT_3 = ground_truth_inputs["GT_3"]
-    
-    
-            if data_in_use <= 2:
-                if flag_miou:
-                    gt_segmentation = cv2.resize(gt_segmentation, (img_raw_rsz_uint8.shape[1], img_raw_rsz_uint8.shape[0]))
-    
-                    evaluator_seg = eval_seg_object(gt_segmentation, labels_seg_predicted,
-                                                    image_height=img_raw_rsz_uint8.shape[0],
-                                                    image_width=img_raw_rsz_uint8.shape[1])
-    
-                    if num_seg_classes == 3:
-                        _,Class_0 = evaluator_seg.calculate_IoU(class_this=0)               #IoU_rail_region
-                        _,Class_1 = evaluator_seg.calculate_IoU(class_this=1)               #IoU_rail
-                        _,Class_2 = evaluator_seg.calculate_IoU(class_this=2)               #IoU_background
-                        GT_3 = 0.1
-    
-                    if num_seg_classes == 4:
-                        _,Class_0 = evaluator_seg.calculate_IoU(class_this=0)               #Left
-                        _,Class_1 = evaluator_seg.calculate_IoU(class_this=1)               #Background
-                        _,Class_2 = evaluator_seg.calculate_IoU(class_this=2)               #Right
-                        GT_3,Class_3 = evaluator_seg.calculate_IoU(class_this=3)             #Right
-    
-                    if num_seg_classes == 19:
-                        _,Class_0 = evaluator_seg.calculate_IoU(class_this=12)
-                        _,Class_1 = evaluator_seg.calculate_IoU(class_this=17)
-                        _,Class_2 = evaluator_seg.calculate_IoU(class_this=3)
-    
-                else:
-                    GT_3 = 0.1
+            gt_segmentation = ground_truth_inputs["gt_segmentation"]
+            GT_3 = ground_truth_inputs["GT_3"]
+
+            segmentation_iou = calculate_demo_eval_segmentation_iou(
+                data_in_use=data_in_use,
+                flag_miou=flag_miou,
+                gt_segmentation=gt_segmentation,
+                labels_seg_predicted=labels_seg_predicted,
+                image_height=img_raw_rsz_uint8.shape[0],
+                image_width=img_raw_rsz_uint8.shape[1],
+                num_seg_classes=num_seg_classes,
+                class_0=Class_0,
+                class_1=Class_1,
+                class_2=Class_2,
+                class_3=Class_3,
+                gt_3=GT_3,
+            )
+            gt_segmentation = segmentation_iou["gt_segmentation"]
+            Class_0 = segmentation_iou["Class_0"]
+            Class_1 = segmentation_iou["Class_1"]
+            Class_2 = segmentation_iou["Class_2"]
+            Class_3 = segmentation_iou["Class_3"]
+            GT_3 = segmentation_iou["GT_3"]
     
     
             image_showing_evaluation_res, metric_record = evaluate_demo_eval_image(
