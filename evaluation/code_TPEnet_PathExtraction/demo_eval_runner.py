@@ -20,6 +20,7 @@ from ptsemseg.evaluation import MyHelper_GT
 from ptsemseg.evaluation import create_VSAObject_from_PE_results
 from ptsemseg.evaluation import load_demo_eval_ground_truth_inputs
 from ptsemseg.evaluation import save_demo_eval_metric_outputs
+from ptsemseg.evaluation import save_demo_eval_result_images
 from ptsemseg.evaluation.metrics import eval_object_topology
 from ptsemseg.evaluation.metrics import eval_seg_object
 from ptsemseg.inference import PathExtraction_TPEnet
@@ -335,12 +336,14 @@ def run_demo_eval():
     
         ### 3.5.6 save image
         if flag_save_img == 1:
-    
-            cv2.imwrite(os.path.join(output_subdirs["img"], "resluting_image_" + str(img_idx) + ".jpg"), image_showing_evaluation_res)
-            cv2.imwrite(os.path.join(output_subdirs["seg"], "resluting_image_" + str(img_idx) + ".bmp"), img_res_seg)
-            cv2.imwrite(os.path.join(output_subdirs["cen"], "resluting_image_" + str(img_idx) + ".png"), img_res_centerness)
-            if img_res_AFM_direct is not None:
-                cv2.imwrite(os.path.join(output_subdirs["afm"], "resluting_image_" + str(img_idx) + ".png"), img_res_AFM_direct)
+            save_demo_eval_result_images(
+                output_subdirs=output_subdirs,
+                img_idx=img_idx,
+                image_showing_evaluation_res=image_showing_evaluation_res,
+                img_res_seg=img_res_seg,
+                img_res_centerness=img_res_centerness,
+                img_res_AFM_direct=img_res_AFM_direct,
+            )
     
     
             # gt_final_dict_xs_img_rail_LR = json.load(open("railsem_jsons_test_modified2/railsem_jsons_test_modified" + str(my_idx) + ".json", 'r'))
