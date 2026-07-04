@@ -4,7 +4,6 @@
 
 import os
 import re
-import pickle
 import cv2
 import numpy as np
 import copy
@@ -16,7 +15,6 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ptsemseg.evaluation import MyHelper_GT
 from ptsemseg.evaluation import calculate_demo_eval_segmentation_iou
 from ptsemseg.evaluation import create_VSAObject_from_PE_results
 from ptsemseg.evaluation import evaluate_demo_eval_image
@@ -25,13 +23,7 @@ from ptsemseg.evaluation import save_demo_eval_metric_outputs
 from ptsemseg.evaluation import save_demo_eval_result_images
 from ptsemseg.inference import PathExtraction_TPEnet
 from ptsemseg.inference import read_demo_eval_image_uint8
-from ptsemseg.inference.demo_eval_args import define_args_algorithm
-from ptsemseg.inference.demo_eval_args import define_args_operation
-from ptsemseg.inference.demo_eval_args import set_value_for_args_algorithm
-from ptsemseg.inference.runtime_defaults import get_demo_preset
-from ptsemseg.inference.runtime_defaults import get_demo_runtime_settings
-from ptsemseg.inference.runtime_defaults import get_metrics_output_dir
-from ptsemseg.inference.runtime_defaults import get_output_subdirs
+from ptsemseg.inference.demo_eval_runtime import initialize_demo_eval_runtime
 
 
 def run_demo_eval():
@@ -40,62 +32,41 @@ def run_demo_eval():
     ###=====================================================================================================================
     ### 0. setting
     ###=====================================================================================================================
-    runtime_settings = get_demo_runtime_settings()
-    
-    title_testrun_this = runtime_settings["title_testrun_this"]
-    
-    fname_pathlabel_gt_in = None
-    format_fname_img_in   = None
-    format_fname_img_out  = None
-    w_img = 960
-    dx_valid_a = 0
-    dx_valid_b = 0
-    metrics_output_dir = get_metrics_output_dir()
-    output_subdirs = get_output_subdirs()
-    
-    demo_preset = runtime_settings.get("demo_preset", get_demo_preset(title_testrun_this))
-    fname_pathlabel_gt_in = demo_preset["fname_pathlabel_gt_in"]
-    format_fname_img_in   = demo_preset["format_fname_img_in"]
-    format_fname_img_out  = demo_preset["format_fname_img_out"]
-    dx_valid_a = demo_preset["dx_valid_a"]
-    dx_valid_b = demo_preset["dx_valid_b"]
-    
-    obj_helper_GT = MyHelper_GT(title_testrun_this, w_img, dx_valid_a, dx_valid_b)
-    
-    with open(fname_pathlabel_gt_in, 'rb') as fh:
-        list_pathlabel_gt_in = pickle.load(fh)
-    #end
-    
-    totnum_steps = len(list_pathlabel_gt_in)
+    runtime_context = initialize_demo_eval_runtime()
+
+    title_testrun_this = runtime_context.title_testrun_this
+    fname_pathlabel_gt_in = runtime_context.fname_pathlabel_gt_in
+    format_fname_img_in = runtime_context.format_fname_img_in
+    format_fname_img_out = runtime_context.format_fname_img_out
+    w_img = runtime_context.w_img
+    dx_valid_a = runtime_context.dx_valid_a
+    dx_valid_b = runtime_context.dx_valid_b
+    metrics_output_dir = runtime_context.metrics_output_dir
+    output_subdirs = runtime_context.output_subdirs
+    obj_helper_GT = runtime_context.obj_helper_GT
+    list_pathlabel_gt_in = runtime_context.list_pathlabel_gt_in
+    totnum_steps = runtime_context.totnum_steps
     
     ###==================================================================================================================
     ### 1. set parameters
     ###==================================================================================================================
-    architecture    = runtime_settings["architecture"]    # 0 for TPE-Net - 1 for DLink-Net34 - 2 for erfnet - 3 for BisenetV2 - 4 for segformer - 5 SegHarDNet
-    
-    num_seg_classes = runtime_settings["num_seg_classes"]
-    num_channel_reg = runtime_settings["num_channel_reg"]
-    
-    seg_in_pp       = runtime_settings["seg_in_pp"]
-    flag_miou       = runtime_settings["flag_miou"]
-    
-    flag_save_img   = runtime_settings["flag_save_img"]
-    flag_save_data  = runtime_settings["flag_save_data"]
-    flag_single_multiple_path_evaluation = runtime_settings["flag_single_multiple_path_evaluation"]
-    
-    data_in_use     = runtime_settings["data_in_use"]      # 0 for RailSem19 - 1 for RailSet - 2 for RailDB - 3 for YDHR - 4 for others without GT data
-    
-    ### define args
-    DATASET_for_use = runtime_settings["dataset_for_use"]
-    parser_oper = define_args_operation(data_in_use, architecture)
-    parser_alg  = define_args_algorithm(DATASET_for_use, architecture)
-    
-    ### parse
-    args_oper = parser_oper.parse_args()
-    args_alg  = parser_alg.parse_args()
-    
-    ### set values for some args
-    args_alg = set_value_for_args_algorithm(DATASET_for_use, args_alg)
+    architecture = runtime_context.architecture    # 0 for TPE-Net - 1 for DLink-Net34 - 2 for erfnet - 3 for BisenetV2 - 4 for segformer - 5 SegHarDNet
+
+    num_seg_classes = runtime_context.num_seg_classes
+    num_channel_reg = runtime_context.num_channel_reg
+
+    seg_in_pp = runtime_context.seg_in_pp
+    flag_miou = runtime_context.flag_miou
+
+    flag_save_img = runtime_context.flag_save_img
+    flag_save_data = runtime_context.flag_save_data
+    flag_single_multiple_path_evaluation = runtime_context.flag_single_multiple_path_evaluation
+
+    data_in_use = runtime_context.data_in_use      # 0 for RailSem19 - 1 for RailSet - 2 for RailDB - 3 for YDHR - 4 for others without GT data
+
+    DATASET_for_use = runtime_context.dataset_for_use
+    args_oper = runtime_context.args_oper
+    args_alg = runtime_context.args_alg
     
     
     ###==================================================================================================================
