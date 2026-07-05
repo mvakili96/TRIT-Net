@@ -55,15 +55,23 @@ The repository now also contains a copied demo/evaluation codebase under:
 
 - `evaluation/code_TPEnet_PathExtraction/`
 
-At the current integration stage, that copied demo/eval tree is intentionally
-still independent. It has not yet been consolidated into `ptsemseg/`, and its
-duplicated model, checkpoint, preprocessing, visualization, and evaluation code
-has not yet been replaced.
+That tree now mostly contains the stable public demo/eval entry point,
+compatibility runner wrapper, local assets, checkpoints, and runtime artifacts.
+The reusable demo/eval implementation has been moved into shared modules under
+`ptsemseg/inference/` and `ptsemseg/evaluation/`.
 
 Current public entry points are:
 
 - Training: `python train_py/train_my_rpnet_c.py`
 - Demo/eval: `evaluation/code_TPEnet_PathExtraction/demo_TPEnet.py`
+
+Current shared demo/eval implementation modules include:
+
+- `ptsemseg/inference/demo_eval_pipeline.py`
+- `ptsemseg/inference/demo_eval_runtime.py`
+- `ptsemseg/inference/demo_eval_execution.py`
+- `ptsemseg/inference/path_extraction.py`
+- `ptsemseg/evaluation/`
 
 Important current demo/eval runtime assumption:
 
@@ -72,24 +80,19 @@ Important current demo/eval runtime assumption:
   `./Performance Metrics/...`, and `IMG/`, `SEG/`, `CEN/`, `AFM/`.
 - In practice, this means the copied demo/eval script currently expects to be
   run with `evaluation/code_TPEnet_PathExtraction/` as the working directory.
-- Do not move that script, change its imports, or rewrite its path handling
-  during the current documentation-only stage.
+- `demo_eval_runner.py` is intentionally kept as a tiny compatibility wrapper
+  because `demo_TPEnet.py` imports it.
 
-Current integration status inside the copied demo/eval repo:
+Current integration status:
 
-- Stage 2 has centralized image-size defaults, input-directory defaults,
-  demo-preset paths, architecture-name mapping, camera-calibration path, and
-  checkpoint-default selection into
-  `ptsemseg/inference/runtime_defaults.py`.
 - A configuration-alignment step now adds `configs/demo_eval.yml` plus
   `ptsemseg/inference/config.py`, so user-facing demo/eval runtime defaults can
-  live in YAML while the copied code keeps its current behavior.
-- This is a compatibility-only cleanup step. The demo/eval repo still runs as
-  its own copied codebase, and no model, preprocessing, checkpoint-loading,
-  metric, output-folder, or visualization behavior is intended to change.
-
-Later integration stages are expected to gradually reuse shared `ptsemseg/`
-modules, but that consolidation has not started yet.
+  live in YAML while current behavior stays unchanged.
+- Demo/eval model construction, checkpoint loading, preprocessing,
+  path-extraction, result writing, and metric helpers now route through shared
+  `ptsemseg/` modules where compatibility was verified.
+- The remaining copied-tree Python files are public entry/wrapper files, not
+  duplicate model or helper implementations.
 
 See [docs/demo_eval_runtime.md](/home/m_vakili_am/Projects/TRIT-Net/docs/demo_eval_runtime.md)
 for the current demo/eval runtime inventory and safe baseline verification
@@ -244,7 +247,7 @@ Source-code directories include:
 - `helpers_my/`
 - `docs/`
 - `evaluation/code_TPEnet_PathExtraction/` source files such as `demo_TPEnet.py`,
-  and `demo_eval_runner.py`
+  and the compatibility wrapper `demo_eval_runner.py`
 
 Local data, checkpoints, generated outputs, and runtime-artifact directories
 include:
