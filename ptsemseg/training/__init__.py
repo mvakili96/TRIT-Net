@@ -32,3 +32,5 @@ from ptsemseg.training.setup import set_random_seeds
 from ptsemseg.training.weights import load_my_state_dict
 from ptsemseg.training.weights import load_weights_to_model
 from ptsemseg.training.weights import weights_init
+from ptsemseg.training.wandb_logging import get_wandb_log_interval
+from ptsemseg.training.wandb_logging import initialize_wandb

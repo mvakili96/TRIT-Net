@@ -26,6 +26,13 @@ training:
     checkpoint_interval: 1000
     n_workers: 0
     print_interval: 100
+    wandb:
+        enabled: True
+        project: TRIT-Net
+        entity: null
+        run_name: seghardnet_lr001_4class
+        mode: online
+        log_interval: 100
     optimizer:
         name: 'sgd'
         adam:

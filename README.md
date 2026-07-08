@@ -133,7 +133,14 @@ Important sections:
 - `training.checkpoint_interval` — training-only checkpoint save interval
 - `training.optimizer` — optimizer selection and hyperparams
 - `training.lr_schedule` — scheduler selection and params; when `max_iter` is omitted, the trainer uses `training.train_iters`
+- `training.wandb` — optional Weights & Biases logging. When enabled, the
+  trainer logs learning rate, total loss, segmentation loss, centerline loss,
+  AFM loss when present, iteration, and batch time.
 - `weight_init_t` — per-architecture initialization-checkpoint paths used before training starts; the trainer looks up `weight_init_t[model.arch]` and loads that checkpoint unless the value is `-1`
+
+The default `configs/trit_net.yml` W&B block is configured for online logging
+to the `trit-net` project. Set `training.wandb.enabled: False` to disable W&B,
+or set `training.wandb.mode: offline` for offline runs.
 
 The current default config also contains machine-local assumptions:
 

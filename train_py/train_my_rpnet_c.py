@@ -31,13 +31,21 @@ from ptsemseg.training          import get_checkpoint_interval
 from ptsemseg.training          import get_default_config_path
 from ptsemseg.training          import get_default_logdir
 from ptsemseg.training          import get_device
+from ptsemseg.training          import get_wandb_log_interval
+from ptsemseg.training          import initialize_wandb
 from ptsemseg.training          import load_config
 from ptsemseg.training          import resolve_network_input_size
 from ptsemseg.training          import save_checkpoint
 from ptsemseg.training          import set_random_seeds
 from ptsemseg.training          import validate_num_segmentation_classes
 
-def train(cfg: dict, writer: SummaryWriter, logger) -> None:
+def train(
+    cfg: dict,
+    writer: SummaryWriter,
+    logger,
+    logdir: str | None = None,
+    config_path: str | None = None,
+) -> None:
     """Main training loop.
 
     Args:
@@ -65,6 +73,13 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
     optimizer = build_optimizer(cfg, model, logger)
     scheduler = build_scheduler(cfg, optimizer)
     loss_fn = build_loss_function(cfg, logger)
+    wandb_run = initialize_wandb(
+        cfg=cfg,
+        logdir=logdir,
+        config_path=config_path,
+        logger=logger,
+    )
+    wandb_log_interval = get_wandb_log_interval(cfg)
 
     start_iter = 0
 
@@ -92,7 +107,7 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
             imgs_raw_fl_n                        = data_batch['img_raw_fl_n']                     
             gt_imgs_label_seg                    = data_batch['gt_img_label_seg']                 
             gt_labelmap_centerline               = data_batch['gt_labelmap_centerline']           
-            gt_AFM                               = data_batch['gt_AFM']                           
+            gt_AFM                               = data_batch['gt_AFM']
 
             imgs_raw_fl_n           = imgs_raw_fl_n.to(device)
             gt_imgs_label_seg       = gt_imgs_label_seg.to(device)
@@ -122,47 +137,74 @@ def train(cfg: dict, writer: SummaryWriter, logger) -> None:
             loss_this = batch_losses.total
             loss_seg = batch_losses.segmentation
             loss_centerline = batch_losses.centerline
+            loss_total_value = loss_this.item()
+            loss_seg_value = loss_seg.item()
+            loss_centerline_value = loss_centerline.item()
+            loss_afm_value = None
 
             if batch_losses.afm is not None:
-                loss_accum_AFM += batch_losses.afm.item()
+                loss_afm_value = batch_losses.afm.item()
+                loss_accum_AFM += loss_afm_value
 
             loss_this.backward()
             optimizer.step()
 
             c_lr = scheduler.get_lr()
+            step = i + 1
+            current_lr = c_lr[0]
 
             time_meter.update(time.time() - start_ts)
 
-            loss_accum_all        += loss_this.item()
-            loss_accum_seg        += loss_seg.item()
-            loss_accum_centerline += loss_centerline.item()
+            loss_accum_all        += loss_total_value
+            loss_accum_seg        += loss_seg_value
+            loss_accum_centerline += loss_centerline_value
             num_loss += 1
+            if wandb_run is not None and wandb_log_interval > 0 and step % wandb_log_interval == 0:
+                wandb_metrics = {
+                    "train/iteration": step,
+                    "train/lr": current_lr,
+                    "train/batch_time_sec": time_meter.val,
+                    "train/loss_total": loss_total_value,
+                    "train/loss_segmentation": loss_seg_value,
+                    "train/loss_centerline": loss_centerline_value,
+                }
+                if loss_afm_value is not None:
+                    wandb_metrics["train/loss_afm"] = loss_afm_value
+                wandb_run.log(wandb_metrics, step=step)
 
-            if (i + 1) % cfg["training"]["print_interval"] == 0:
+            if step % cfg["training"]["print_interval"] == 0:
                 fmt_str = "Iter [{:d}/{:d}]  Loss (all): {:.7f}, Loss (seg): {:.7f}, Loss (centerline): {:.7f}, Loss (AFM): {:.7f}, Time/Image: {:.7f}  lr={:.7f}"
 
                 print_str = fmt_str.format(
-                    i + 1,
+                    step,
                     cfg["training"]["train_iters"],
                     loss_accum_all        / num_loss,
                     loss_accum_seg        / num_loss,
                     loss_accum_centerline / num_loss,
                     loss_accum_AFM        / num_loss,
                     time_meter.avg / cfg["training"]["batch_size"],
-                    c_lr[0],
+                    current_lr,
                 )
 
                 # print(print_str)
                 logger.info(print_str)
-                writer.add_scalar("loss/train_loss", loss_this.item(), i + 1)
+                writer.add_scalar("loss/train_loss", loss_total_value, step)
+                writer.add_scalar("loss/train_loss_segmentation", loss_seg_value, step)
+                writer.add_scalar("loss/train_loss_centerline", loss_centerline_value, step)
+                if loss_afm_value is not None:
+                    writer.add_scalar("loss/train_loss_afm", loss_afm_value, step)
+                writer.add_scalar("lr/train_lr", current_lr, step)
                 time_meter.reset()
 
-            if (i + 1) % checkpoint_interval == 0 or (i + 1) == cfg["training"]["train_iters"]:
-                save_checkpoint(model, i + 1, best_loss=best_loss_hmap, logger=logger)
+            if step % checkpoint_interval == 0 or step == cfg["training"]["train_iters"]:
+                save_checkpoint(model, step, best_loss=best_loss_hmap, logger=logger)
 
-            if (i + 1) == cfg["training"]["train_iters"]:
+            if step == cfg["training"]["train_iters"]:
                 flag = False
                 break
+
+    if wandb_run is not None:
+        wandb_run.finish()
 
 
 if __name__ == "__main__":
@@ -181,8 +223,5 @@ if __name__ == "__main__":
     writer, logger = create_writer_and_logger(args.logdir, args.config)
     logger.info("Let's begin...")
 
-    train(cfg, writer, logger)
-
-
-
+    train(cfg, writer, logger, logdir=args.logdir, config_path=args.config)
 
