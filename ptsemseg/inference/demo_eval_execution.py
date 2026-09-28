@@ -17,6 +17,7 @@ from ptsemseg.evaluation import create_VSAObject_from_PE_results
 from ptsemseg.evaluation import evaluate_demo_eval_image
 from ptsemseg.evaluation import load_demo_eval_ground_truth_inputs
 from ptsemseg.evaluation import save_demo_eval_result_images
+from ptsemseg.evaluation.result_outputs import save_rail_area_mask_image
 from ptsemseg.inference.path_extraction import PathExtraction_TPEnet
 from ptsemseg.inference.preprocessing import read_demo_eval_image_uint8
 
@@ -72,6 +73,8 @@ def process_demo_eval_image(
     obj_helper_GT: Any,
     output_subdirs: Dict[str, str],
     flag_save_img: int,
+    save_rail_area_mask: bool = False,
+    output_filename_index_offset: int = 0,
 ) -> Optional[Dict[str, Any]]:
     """Run one legacy demo/eval image iteration and return its metric record."""
 
@@ -197,6 +200,18 @@ def process_demo_eval_image(
             img_res_seg=img_res_seg,
             img_res_centerness=img_res_centerness,
             img_res_AFM_direct=img_res_AFM_direct,
+            fname_img_in=fname_img_in,
+            index_offset=output_filename_index_offset,
+        )
+
+    if save_rail_area_mask:
+        save_rail_area_mask_image(
+            output_subdirs=output_subdirs,
+            img_idx=img_idx,
+            list_res_paths=list_res_paths,
+            image_shape=image_showing_evaluation_res.shape[:2],
+            fname_img_in=fname_img_in,
+            index_offset=output_filename_index_offset,
         )
 
     return metric_record

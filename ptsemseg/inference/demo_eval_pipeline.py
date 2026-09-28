@@ -82,6 +82,8 @@ def run_demo_eval():
             obj_helper_GT=obj_helper_GT,
             output_subdirs=output_subdirs,
             flag_save_img=flag_save_img,
+            save_rail_area_mask=runtime_context.runtime_settings["flag_save_rail_area_mask"],
+            output_filename_index_offset=runtime_context.runtime_settings["output_filename_index_offset"],
         )
         if metric_record is not None:
             res_eval.append(metric_record)

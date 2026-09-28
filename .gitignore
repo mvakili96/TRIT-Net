@@ -20,6 +20,7 @@ evaluation/code_TPEnet_PathExtraction/AFM/
 evaluation/code_TPEnet_PathExtraction/CEN/
 evaluation/code_TPEnet_PathExtraction/Direction_Map_4class/
 evaluation/code_TPEnet_PathExtraction/IMG/
+evaluation/code_TPEnet_PathExtraction/MASK/
 evaluation/code_TPEnet_PathExtraction/Performance Metrics/
 evaluation/code_TPEnet_PathExtraction/RailDB/
 evaluation/code_TPEnet_PathExtraction/RailSet/

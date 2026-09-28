@@ -1,9 +1,9 @@
 model:
-  architecture_code: 5
-  architecture_name: seghardnet
-  num_seg_classes: 4
+  architecture_code: 0
+  architecture_name: rpnet_c
+  num_seg_classes: 3
   num_channel_reg: 1
-  seg_in_pp: false
+  seg_in_pp: true
 
 runtime:
   title_testrun_this: TEST7_RUN2_NRS_GOPRO
@@ -11,6 +11,8 @@ runtime:
   dataset_for_use: 0
   flag_miou: false
   flag_save_img: 1
+  flag_save_rail_area_mask: true
+  output_filename_index_offset: 7000
   flag_save_data: 1
   flag_single_multiple_path_evaluation: 1
   operation:
@@ -27,6 +29,7 @@ paths:
     seg: SEG
     cen: CEN
     afm: AFM
+    rail_area_mask: MASK
 
 demo_presets:
   TEST7_RUN2_NRS_GOPRO:

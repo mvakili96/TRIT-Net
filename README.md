@@ -94,6 +94,18 @@ Current integration status:
 - The remaining copied-tree Python files are public entry/wrapper files, not
   duplicate model or helper implementations.
 
+To save an additional binary rail-area PNG for each image, set
+`runtime.flag_save_rail_area_mask: true` in `configs/demo_eval.yml`.
+The mask fills the area between each detected left/right rail (rails included)
+with 255 and leaves other pixels at 0. It is saved as a single-channel
+`MASK/<shifted-input-stem>.png` from the demo/eval working directory;
+`paths.output_subdirs.rail_area_mask` controls the folder name. The option is
+enabled in the current YAML and works independently of `runtime.flag_save_img`.
+`runtime.output_filename_index_offset` adds 7000 to the input filename's last
+numeric group (for example, `rs06002.jpg` becomes `rs13002.png` in MASK).
+Set it to 0 to retain the original index. SEG uses `.bmp`; CEN, AFM, and MASK
+use `.png`. IMG and metric indices are unchanged.
+
 See [docs/demo_eval_runtime.md](/home/m_vakili_am/Projects/TRIT-Net/docs/demo_eval_runtime.md)
 for the current demo/eval runtime inventory and safe baseline verification
 commands.

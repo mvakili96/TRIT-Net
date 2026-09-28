@@ -315,7 +315,7 @@ class PathExtraction_TPEnet:
         ###------------------------------------------------------------------------------------------------
         ### 7. create paths from triplet points
         ###------------------------------------------------------------------------------------------------
-        use_PP = False
+        use_PP = True
 
         if self.num_seg_classes == 4 and use_PP is False:
             list_paths_final = self.m_obj_utils_img.remove_post_process(res_centerness_direct,labels_seg_predicted,img_raw_rsz_uint8, res_AFM_direct)

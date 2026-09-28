@@ -1,5 +1,4 @@
-# 2020/8/11
-# Jungwon Kang
+
 """Compatibility wrapper for the shared demo/eval pipeline."""
 
 import os

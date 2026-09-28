@@ -1,5 +1,3 @@
-# 2020/8/11
-# Jungwon Kang
 """Compatibility entry point for the copied TPEnet demo/eval script.
 
 The runnable demo/eval program lives in ``demo_eval_runner.py``. This public

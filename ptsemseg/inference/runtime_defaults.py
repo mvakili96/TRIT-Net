@@ -248,6 +248,8 @@ def get_demo_runtime_settings() -> Dict[str, object]:
         "seg_in_pp": False,
         "flag_miou": False,
         "flag_save_img": 1,
+        "flag_save_rail_area_mask": False,
+        "output_filename_index_offset": 0,
         "flag_save_data": 1,
         "flag_single_multiple_path_evaluation": 1,
         "data_in_use": 0,
@@ -273,6 +275,12 @@ def get_demo_runtime_settings() -> Dict[str, object]:
         settings["dataset_for_use"] = runtime_cfg.get("dataset_for_use", settings["dataset_for_use"])
         settings["flag_miou"] = runtime_cfg.get("flag_miou", settings["flag_miou"])
         settings["flag_save_img"] = runtime_cfg.get("flag_save_img", settings["flag_save_img"])
+        settings["flag_save_rail_area_mask"] = runtime_cfg.get(
+            "flag_save_rail_area_mask", settings["flag_save_rail_area_mask"]
+        )
+        settings["output_filename_index_offset"] = runtime_cfg.get(
+            "output_filename_index_offset", settings["output_filename_index_offset"]
+        )
         settings["flag_save_data"] = runtime_cfg.get("flag_save_data", settings["flag_save_data"])
         settings["flag_single_multiple_path_evaluation"] = runtime_cfg.get(
             "flag_single_multiple_path_evaluation",
