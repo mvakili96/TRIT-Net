@@ -80,8 +80,7 @@ Important current demo/eval runtime assumption:
   `./Performance Metrics/...`, and `IMG/`, `SEG/`, `CEN/`, `AFM/`.
 - In practice, this means the copied demo/eval script currently expects to be
   run with `evaluation/code_TPEnet_PathExtraction/` as the working directory.
-- `demo_eval_runner.py` is intentionally kept as a tiny compatibility wrapper
-  because `demo_TPEnet.py` imports it.
+- `demo_TPEnet.py` imports the shared inference pipeline directly.
 
 Current integration status:
 
@@ -91,8 +90,8 @@ Current integration status:
 - Demo/eval model construction, checkpoint loading, preprocessing,
   path-extraction, result writing, and metric helpers now route through shared
   `ptsemseg/` modules where compatibility was verified.
-- The remaining copied-tree Python files are public entry/wrapper files, not
-  duplicate model or helper implementations.
+- The copied tree keeps the public demo/eval entry point and local assets;
+  reusable inference and evaluation code lives in `ptsemseg/`.
 
 To save an additional binary rail-area PNG for each image, set
 `runtime.flag_save_rail_area_mask: true` in `configs/demo_eval.yml`.
@@ -265,8 +264,7 @@ Source-code directories include:
 - `ptsemseg/`
 - `helpers_my/`
 - `docs/`
-- `evaluation/code_TPEnet_PathExtraction/` source files such as `demo_TPEnet.py`,
-  and the compatibility wrapper `demo_eval_runner.py`
+- `evaluation/code_TPEnet_PathExtraction/demo_TPEnet.py`
 
 Local data, checkpoints, generated outputs, and runtime-artifact directories
 include:

@@ -1,10 +1,16 @@
-"""Compatibility entry point for the copied TPEnet demo/eval script.
+"""Public TRIT-Net demo/eval entry point.
 
-The runnable demo/eval program lives in ``demo_eval_runner.py``. This public
-script stays intentionally thin while preserving the old launch command.
+The script preserves the legacy launch path while using shared inference code.
 """
 
-from demo_eval_runner import run_demo_eval
+import os
+import sys
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from ptsemseg.inference.demo_eval_pipeline import run_demo_eval
 
 
 if __name__ == "__main__":

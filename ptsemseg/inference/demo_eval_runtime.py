@@ -49,7 +49,6 @@ class DemoEvalRuntimeContext:
     flag_save_data: int
     flag_single_multiple_path_evaluation: int
     data_in_use: int
-    dataset_for_use: int
     args_oper: Any
     args_alg: Any
 
@@ -88,14 +87,13 @@ def initialize_demo_eval_runtime() -> DemoEvalRuntimeContext:
     flag_save_data = runtime_settings["flag_save_data"]
     flag_single_multiple_path_evaluation = runtime_settings["flag_single_multiple_path_evaluation"]
     data_in_use = runtime_settings["data_in_use"]
-    dataset_for_use = runtime_settings["dataset_for_use"]
 
     parser_oper = define_args_operation(data_in_use, architecture)
-    parser_alg = define_args_algorithm(dataset_for_use, architecture)
+    parser_alg = define_args_algorithm()
 
     args_oper = parser_oper.parse_args()
     args_alg = parser_alg.parse_args()
-    args_alg = set_value_for_args_algorithm(dataset_for_use, args_alg)
+    args_alg = set_value_for_args_algorithm(args_alg)
 
     return DemoEvalRuntimeContext(
         runtime_settings=runtime_settings,
@@ -121,7 +119,6 @@ def initialize_demo_eval_runtime() -> DemoEvalRuntimeContext:
         flag_save_data=flag_save_data,
         flag_single_multiple_path_evaluation=flag_single_multiple_path_evaluation,
         data_in_use=data_in_use,
-        dataset_for_use=dataset_for_use,
         args_oper=args_oper,
         args_alg=args_alg,
     )
