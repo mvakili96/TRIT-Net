@@ -101,10 +101,6 @@ def get_model_arch_for_code(architecture: int) -> str:
 
 
 def get_default_input_dir(data_in_use: int) -> str:
-    configured = _get_config_value(None, "runtime", "operation", "dir_input")
-    if configured is not None:
-        return configured
-
     configured = _get_config_value(None, "dataset_defaults", "input_dirs", data_in_use)
     if configured is not None:
         return configured
@@ -169,7 +165,7 @@ def get_operation_runtime_defaults(data_in_use: int, architecture: int) -> Dict[
     }
     configured = _get_config_value(None, "runtime", "operation")
     if configured is not None:
-        defaults.update(configured)
+        defaults.update({key: value for key, value in configured.items() if key != "dir_input"})
     return defaults
 
 

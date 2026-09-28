@@ -21,7 +21,6 @@ runtime:
   flag_single_multiple_path_evaluation: true
   operation:
     size_img_process: {h: 544, w: 960}
-    dir_input: ./sample_input_imgs/resized_railsem
     dir_output: ./res_imgs
     b_save_res_imgs_as_file: false
 

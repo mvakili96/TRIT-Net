@@ -82,6 +82,11 @@ Important current demo/eval runtime assumption:
   run with `evaluation/code_TPEnet_PathExtraction/` as the working directory.
 - `demo_TPEnet.py` imports the shared inference pipeline directly.
 
+Input images are selected by `runtime.data_in_use` through
+`dataset_defaults.input_dirs` in `configs/demo_eval.yml`. To use a different
+folder for a mode, change its mapping there; there is no separate `dir_input`
+config or CLI override.
+
 Current integration status:
 
 - A configuration-alignment step now adds `configs/demo_eval.yml` plus

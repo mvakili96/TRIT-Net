@@ -44,12 +44,7 @@ def define_args_operation(data_in_use, architecture):
         default=operation_defaults["size_img_process"],
         help='image size used in a process',
     )
-    parser.add_argument(
-        '--dir_input',
-        type=str,
-        default=operation_defaults["dir_input"],
-        help='directory for input images',
-    )
+    parser.set_defaults(dir_input=operation_defaults["dir_input"])
     parser.add_argument('--dir_output', type=str, default=operation_defaults["dir_output"], help='directory for output images')
     parser.add_argument(
         '--b_save_res_imgs_as_file',
@@ -63,8 +58,6 @@ def define_args_operation(data_in_use, architecture):
     return parser
 #END
 
-#parser.add_argument('--dir_input', type=str, default="/media/yu1/hdd_my/Dataset_YDHR_OCT009_OCT10/img_gopro/selected/test7_run2_normal_reverse_switch_in", help='directory for input images')
-#parser.add_argument('--dir_input', type=str, default="/home/yu1/proj_avin/dataset/img_nyc_1280_720", help='directory for input images')
 
 
 ########################################################################################################################
