@@ -14,11 +14,11 @@ runtime:
   data_in_use: 0
   use_clustering_post_process: true
   flag_miou: false
-  flag_save_img: 1
+  flag_save_img: true
   flag_save_rail_area_mask: true
   output_filename_index_offset: 7000
-  flag_save_data: 1
-  flag_single_multiple_path_evaluation: 1
+  flag_save_data: true
+  flag_single_multiple_path_evaluation: true
   operation:
     size_img_process: {h: 544, w: 960}
     dir_input: ./sample_input_imgs/resized_railsem
@@ -90,7 +90,7 @@ checkpoint:
 
 algorithm_defaults:
   b_create_imgs_res_interim: false
-  file_weight: ./net_weight/Mybest_219gooo01.pkl
+  file_weight: ./net_weight/Mybest_21901.pkl
   param_triplet_nms_alpha: 0.8703703703703703
   param_triplet_nms_beta: -220.0
   param_triplet_nms_min: 15.0

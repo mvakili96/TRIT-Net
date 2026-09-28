@@ -45,9 +45,9 @@ class DemoEvalRuntimeContext:
     num_channel_reg: int
     seg_in_pp: bool
     flag_miou: bool
-    flag_save_img: int
-    flag_save_data: int
-    flag_single_multiple_path_evaluation: int
+    flag_save_img: bool
+    flag_save_data: bool
+    flag_single_multiple_path_evaluation: bool
     data_in_use: int
     args_oper: Any
     args_alg: Any

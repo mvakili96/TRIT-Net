@@ -74,7 +74,7 @@ def process_demo_eval_image(
     list_pathlabel_gt_in: List[Any],
     obj_helper_GT: Any,
     output_subdirs: Dict[str, str],
-    flag_save_img: int,
+    flag_save_img: bool,
     save_rail_area_mask: bool = False,
     output_filename_index_offset: int = 0,
 ) -> Optional[Dict[str, Any]]:
@@ -194,7 +194,7 @@ def process_demo_eval_image(
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
-    if flag_save_img == 1:
+    if flag_save_img:
         save_demo_eval_result_images(
             output_subdirs=output_subdirs,
             img_idx=img_idx,

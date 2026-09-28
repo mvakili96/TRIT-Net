@@ -36,7 +36,7 @@ def save_demo_eval_metric_outputs(
     sum_time_net = 0
     sum_time_pp = 0
 
-    if flag_save_data == 1 and data_in_use <= 3:
+    if flag_save_data and data_in_use <= 3:
         with open(os.path.join(metrics_output_dir, 'precision_1.txt'), 'w') as f:
             for item in res_eval:
                 prec = item["precision"]
@@ -130,7 +130,7 @@ def save_demo_eval_metric_outputs(
     precision_path_1 = []
     recall_path_1 = []
 
-    if flag_single_multiple_path_evaluation == 1:
+    if flag_single_multiple_path_evaluation:
         with open(os.path.join(metrics_output_dir, 'precision_TP_1.txt'), 'a') as f:
             for item in res_eval:
                 prec = item["precision"]
