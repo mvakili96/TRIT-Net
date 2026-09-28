@@ -217,6 +217,7 @@ def get_demo_runtime_settings() -> Dict[str, object]:
         "flag_save_data": 1,
         "flag_single_multiple_path_evaluation": 1,
         "data_in_use": 0,
+        "use_clustering_post_process": True,
     }
 
     model_cfg = _get_config_value({}, "model")
@@ -235,6 +236,9 @@ def get_demo_runtime_settings() -> Dict[str, object]:
     if runtime_cfg:
         settings["title_testrun_this"] = runtime_cfg.get("title_testrun_this", settings["title_testrun_this"])
         settings["data_in_use"] = runtime_cfg.get("data_in_use", settings["data_in_use"])
+        settings["use_clustering_post_process"] = runtime_cfg.get(
+            "use_clustering_post_process", settings["use_clustering_post_process"]
+        )
         settings["flag_miou"] = runtime_cfg.get("flag_miou", settings["flag_miou"])
         settings["flag_save_img"] = runtime_cfg.get("flag_save_img", settings["flag_save_img"])
         settings["flag_save_rail_area_mask"] = runtime_cfg.get(

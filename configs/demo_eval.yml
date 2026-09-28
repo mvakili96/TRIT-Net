@@ -12,6 +12,7 @@ data:
 runtime:
   title_testrun_this: TEST7_RUN2_NRS_GOPRO
   data_in_use: 0
+  use_clustering_post_process: true
   flag_miou: false
   flag_save_img: 1
   flag_save_rail_area_mask: true

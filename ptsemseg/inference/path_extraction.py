@@ -43,11 +43,12 @@ __all__ = ["PathExtraction_TPEnet"]
 ########################################################################################################################
 class PathExtraction_TPEnet:
 
-    def __init__(self, args, num_seg_classes, num_channel_reg, seg_in_pp, architecture):
+    def __init__(self, args, num_seg_classes, num_channel_reg, seg_in_pp, architecture, use_clustering_post_process):
         self.num_seg_classes = num_seg_classes
         self.num_channel_reg = num_channel_reg
         self.seg_in_pp       = seg_in_pp
         self.architecture    = architecture
+        self.use_clustering_post_process = use_clustering_post_process
 
 
         self.m_b_create_imgs_res_interim = args.b_create_imgs_res_interim
@@ -315,9 +316,7 @@ class PathExtraction_TPEnet:
         ###------------------------------------------------------------------------------------------------
         ### 7. create paths from triplet points
         ###------------------------------------------------------------------------------------------------
-        use_PP = True
-
-        if self.num_seg_classes == 4 and use_PP is False:
+        if self.num_seg_classes == 4 and not self.use_clustering_post_process:
             list_paths_final = self.m_obj_utils_img.remove_post_process(res_centerness_direct,labels_seg_predicted,img_raw_rsz_uint8, res_AFM_direct)
         
         else:

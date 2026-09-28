@@ -37,6 +37,7 @@ def initialize_demo_eval_execution(
     num_channel_reg: int,
     seg_in_pp: bool,
     architecture: int,
+    use_clustering_post_process: bool,
 ) -> DemoEvalExecutionContext:
     """Preserve legacy input discovery and path extractor construction."""
 
@@ -51,6 +52,7 @@ def initialize_demo_eval_execution(
         num_channel_reg,
         seg_in_pp,
         architecture,
+        use_clustering_post_process,
     )
 
     return DemoEvalExecutionContext(

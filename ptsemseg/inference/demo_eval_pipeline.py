@@ -17,6 +17,7 @@ def run_demo_eval():
         num_channel_reg=runtime_context.num_channel_reg,
         seg_in_pp=runtime_context.seg_in_pp,
         architecture=runtime_context.architecture,
+        use_clustering_post_process=runtime_context.runtime_settings["use_clustering_post_process"],
     )
 
     res_eval = []
