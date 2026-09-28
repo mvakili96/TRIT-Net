@@ -2,18 +2,25 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Dict
 
 import cv2
 import numpy as np
 
+from ptsemseg.inference.config import load_demo_eval_config
 from ptsemseg.inference.model_adapter import DEMO_EVAL_LOCAL_ONLY_ARCH_NAME
 from ptsemseg.inference.model_adapter import get_demo_eval_architecture_name
 from ptsemseg.loader.io import convert_img_ori_to_img_data as convert_training_img_to_model_input
 
 
-DEMO_EVAL_DEFAULT_RGB_MEAN = np.array([113.95, 118.05, 110.18]) / 255.0
-DEMO_EVAL_DEFAULT_RGB_STD = np.array([78.37, 68.79, 65.80]) / 255.0
+@lru_cache(maxsize=1)
+def _get_demo_eval_rgb_stats():
+    data_config = load_demo_eval_config()["data"]
+    return (
+        np.array(data_config["rgb_mean"]) / 255.0,
+        np.array(data_config["rgb_std"]) / 255.0,
+    )
 
 
 def read_demo_eval_image_uint8(
@@ -28,8 +35,8 @@ def read_demo_eval_image_uint8(
 def convert_demo_eval_img_to_model_input(
     img_ori_uint8: np.ndarray,
     architecture_code: int,
-    rgb_mean: np.ndarray = DEMO_EVAL_DEFAULT_RGB_MEAN,
-    rgb_std: np.ndarray = DEMO_EVAL_DEFAULT_RGB_STD,
+    rgb_mean: np.ndarray | None = None,
+    rgb_std: np.ndarray | None = None,
 ) -> np.ndarray:
     """Convert a demo/eval image to model input format.
 
@@ -38,6 +45,13 @@ def convert_demo_eval_img_to_model_input(
     shared ``rpnet_c`` and follows the same numerical behavior as the copied
     demo/eval code.
     """
+    if rgb_mean is None or rgb_std is None:
+        default_mean, default_std = _get_demo_eval_rgb_stats()
+        if rgb_mean is None:
+            rgb_mean = default_mean
+        if rgb_std is None:
+            rgb_std = default_std
+
     arch_name = get_demo_eval_architecture_name(architecture_code)
 
     if arch_name == DEMO_EVAL_LOCAL_ONLY_ARCH_NAME:

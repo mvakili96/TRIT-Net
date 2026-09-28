@@ -5,6 +5,10 @@ model:
   num_channel_reg: 1
   seg_in_pp: false
 
+data:
+  rgb_mean: [113.95, 118.05, 110.18]
+  rgb_std: [78.37, 68.79, 65.80]
+
 runtime:
   title_testrun_this: TEST7_RUN2_NRS_GOPRO
   data_in_use: 0
