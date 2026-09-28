@@ -20,7 +20,6 @@ runtime:
   flag_save_data: true
   flag_single_multiple_path_evaluation: true
   operation:
-    size_img_process: {h: 544, w: 960}
     dir_output: ./res_imgs
     b_save_res_imgs_as_file: false
 
