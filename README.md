@@ -10,6 +10,34 @@ TRIT-Net is a compact framework focused on rail-track scene understanding. It pr
 - Reproducible training loop in `train_py/train_my_rpnet_c.py`
 - Current tracked training path uses `Triplet_Loader` with a RailSem-style aligned-file dataset layout
 
+## Results
+
+**TRIT-Net on a New York City subway line.** This zero-shot demo shows extracted rail paths alongside the predicted centerline and attraction maps. [Watch the 46-second video](results/nyc-subway-zero-shot-trit-net-h264.mp4).
+
+[![TRIT-Net subway demo showing extracted rail paths and attraction maps](results/nyc-subway-demo-preview.jpg)](results/nyc-subway-zero-shot-trit-net-h264.mp4)
+
+**RailSem19 backbone comparison.** SSL-pretrained TRIT-Net leads the five compared backbones on all four pixel-level AP/AR measures, reaching 90.32% TP-track pixel AP and 89.62% AR.
+
+![RailSem19 pixel-level precision and recall across five backbones](results/railsem19-backbone-comparison.png)
+
+**Path construction.** On RailSem19, attraction-field tracing improves most pixel-level results over spatial clustering for SSL-pretrained TRIT-Net; multi-candidate track recall favors clustering.
+
+![Attraction-field tracing versus spatial clustering on RailSem19](results/railsem19-afm-vs-clustering.png)
+
+**Self-supervised pretraining.** Across RailSem19, RailDB, and RailSet, it improves TRIT-Net pixel localization on average; track-level effects are mixed.
+
+![Effects of self-supervised pretraining across three rail datasets](results/ssl-pretraining-across-datasets.png)
+
+**Inference efficiency.** TRIT-Net with attraction-field tracing reaches an estimated 17.1 frames/s from GPU and CPU stage times, versus 12.0 for TPE-Net with spatial clustering.
+
+![GPU, CPU, throughput, and memory comparison of the two inference pipelines](results/inference-efficiency.png)
+
+**Zero-shot RailSet transfer.** Trained on RailSem19 without RailSet fine-tuning, TPE-Net retains higher multi-candidate precision in several measures, while TRIT-Net leads most recall measures.
+
+![Zero-shot RailSem19-to-RailSet precision and recall for TPE-Net and TRIT-Net](results/railset-zero-shot-transfer.png)
+
+See [the thesis, Chapter 4](results/phd-thesis-mohammadjavad-ghorbanalivakili.pdf) for evaluation details.
+
 ## Repository layout
 
 - `train_py/` — training scripts (main trainer: `train_my_rpnet_c.py`)
@@ -22,6 +50,7 @@ TRIT-Net is a compact framework focused on rail-track scene understanding. It pr
 - `helpers_my/` — compatibility wrappers for legacy utility imports
 - `data/` — local dataset root (not included; expected layout below)
 - `runs/` — local log/TensorBoard output directory
+- `results/` — benchmark figures, subway demo video, and thesis
 
 ## Entry point and runtime artifacts
 
