@@ -14,7 +14,11 @@ This repository implements **TPE-Net** and **TRIT-Net** for extracting candidate
 
 **TRIT-Net on a New York City subway line.** A silent excerpt of this zero-shot demo plays automatically below. [Full 46-second NYC subway video (MP4)](https://raw.githubusercontent.com/mvakili96/TRIT-Net/master/results/nyc-subway-zero-shot-trit-net-h264.mp4). Source footage: [NYC Subway Front Window View - The 7 Express to Manhattan](https://www.youtube.com/watch?v=ukOHqdPbYYg) by DJ Hammers Transport.
 
-[![Animated TRIT-Net subway demo showing extracted rail paths and attraction maps](results/nyc-subway-demo-autoplay.gif)](https://raw.githubusercontent.com/mvakili96/TRIT-Net/master/results/nyc-subway-zero-shot-trit-net-h264.mp4)
+<p align="center">
+  <a href="https://raw.githubusercontent.com/mvakili96/TRIT-Net/master/results/nyc-subway-zero-shot-trit-net-h264.mp4">
+    <img src="results/nyc-subway-demo-autoplay.gif" alt="Animated TRIT-Net subway demo showing extracted rail paths and attraction maps">
+  </a>
+</p>
 
 **RailSem19 backbone comparison.** SSL-pretrained TRIT-Net leads the five compared backbones on all four pixel-level AP/AR measures, reaching 90.32% TP-track pixel AP and 89.62% AR.
 
