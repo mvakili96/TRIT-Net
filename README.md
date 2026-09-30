@@ -1,20 +1,20 @@
-# TRIT-Net
+# TPE-Net and TRIT-Net
 
-TRIT-Net is a compact framework focused on rail-track scene understanding. It provides training utilities, data loaders, and multi-head models (segmentation, centerline heatmaps, and optional AFM head) derived from a lightweight ptsemseg-style codebase.
+This repository implements **TPE-Net** and **TRIT-Net** for extracting candidate train paths from forward-facing rail images. TPE-Net uses a multi-task neural network to segment the scene and regress left–center–right rail triplets, then clusters and links them into paths. TRIT-Net builds on that triplet and centerline representation, adding learned attraction direction and intensity maps to guide path tracing in place of spatial clustering. Both methods are selected through YAML configuration for training and evaluation.
 
 ## Highlights
 
 - Multi-head models (segmentation + centerline [+ AFM])
-- Config-driven training via YAML files in `configs/`
+- Configure either TPE-Net or TRIT-Net using YAML files in `configs/`
 - Custom schedulers and optimizer factories
 - Reproducible training loop in `train_py/train_my_rpnet_c.py`
 - Current tracked training path uses `Triplet_Loader` with a RailSem-style aligned-file dataset layout
 
 ## Results
 
-**TRIT-Net on a New York City subway line.** This zero-shot demo shows extracted rail paths alongside the predicted centerline and attraction maps. [Watch the 46-second video](results/nyc-subway-zero-shot-trit-net-h264.mp4).
+**TRIT-Net on a New York City subway line.** A silent excerpt of this zero-shot demo plays automatically below. [Full 46-second NYC subway video (MP4)](https://raw.githubusercontent.com/mvakili96/TRIT-Net/master/results/nyc-subway-zero-shot-trit-net-h264.mp4). Source footage: [NYC Subway Front Window View - The 7 Express to Manhattan](https://www.youtube.com/watch?v=ukOHqdPbYYg) by DJ Hammers Transport.
 
-[![TRIT-Net subway demo showing extracted rail paths and attraction maps](results/nyc-subway-demo-preview.jpg)](results/nyc-subway-zero-shot-trit-net-h264.mp4)
+[![Animated TRIT-Net subway demo showing extracted rail paths and attraction maps](results/nyc-subway-demo-autoplay.gif)](https://raw.githubusercontent.com/mvakili96/TRIT-Net/master/results/nyc-subway-zero-shot-trit-net-h264.mp4)
 
 **RailSem19 backbone comparison.** SSL-pretrained TRIT-Net leads the five compared backbones on all four pixel-level AP/AR measures, reaching 90.32% TP-track pixel AP and 89.62% AR.
 
@@ -37,6 +37,14 @@ TRIT-Net is a compact framework focused on rail-track scene understanding. It pr
 ![Zero-shot RailSem19-to-RailSet precision and recall for TPE-Net and TRIT-Net](results/railset-zero-shot-transfer.png)
 
 See [the thesis, Chapter 4](results/phd-thesis-mohammadjavad-ghorbanalivakili.pdf) for evaluation details.
+
+## Papers
+
+- **Published — TPE-Net:** Ghorbanalivakili et al., [“TPE-Net: Track Point Extraction and Association Network for Rail Path Proposal Generation”](https://arxiv.org/abs/2302.05803), IEEE CASE, 2023. DOI: [10.1109/CASE56687.2023.10260541](https://doi.org/10.1109/CASE56687.2023.10260541).
+- **Published — TRIT-Net:** Ghorbanalivakili and Sohn, [“TRIT-Net: Triplet-based Railway Instance Tracing Network Using Attraction Field Representation”](https://crv.pubpub.org/pub/h6d3dccv), CRV, 2025. DOI: [10.21428/d82e957c.2ae359db](https://doi.org/10.21428/d82e957c.2ae359db).
+- **Submitted — TPE-Net:** Ghorbanalivakili, Kang, and Sohn, “TPE-Net: Location-Radius Regression for Ego-Path Candidate Enumeration in Railway Switch Scenes,” submitted to *IEEE Open Journal of Intelligent Transportation Systems*, 2026.
+- **Under review — TRIT-Net:** Ghorbanalivakili, Varghese, and Sohn, “Triplet-based Railway Ego-path Candidate Tracing Using a Learned Attraction Field Representation,” under review in *Engineering Applications of Artificial Intelligence*, 2026.
+
 
 ## Repository layout
 
@@ -169,6 +177,16 @@ Loader contract: loaders return a dict with keys used by the trainer, e.g.:
 ## Configuration
 
 Configs live in `configs/*.yml`. The main config used by the trainer is `configs/trit_net.yml`.
+
+### Select a method
+
+| Method | Training: `configs/trit_net.yml` | Demo/eval: `configs/demo_eval.yml` |
+| --- | --- | --- |
+| TPE-Net | `model.arch: rpnet_c`, `training.num_seg_classes: 3` | `model.architecture_code: 0`, `model.architecture_name: TPEnet_a`, `model.num_seg_classes: 3`, `runtime.use_clustering_post_process: true` |
+| TRIT-Net | `model.arch: seghardnet`, `training.num_seg_classes: 4` | `model.architecture_code: 5`, `model.architecture_name: seghardnet`, `model.num_seg_classes: 4`, `runtime.use_clustering_post_process: false` |
+
+Use a checkpoint compatible with the selected method. The checked-in demo/eval config currently enables clustering; set it to `false` to use TRIT-Net attraction-field tracing.
+
 Important sections:
 
 - `model.arch` — model architecture string (must match supported models)
